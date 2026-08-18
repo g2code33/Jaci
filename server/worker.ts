@@ -1,19 +1,18 @@
 // Cloudflare Workers entry point.
 //
-// The Hono app is fully runtime-agnostic; only storage differs. For a
-// production Workers deployment, swap `createMemoryStorage()` for a KV
-// or D1-backed adapter (see README). Local/disk media upload is not
-// available on Workers — use Cloudinary.
+// One Worker serves the API (Hono) and Cloudflare's "Workers Assets" serves
+// the static Vite build (see wrangler.jsonc — `run_worker_first: ["/api/*"]`
+// routes API traffic here while everything else is served from ./dist).
 //
-//   wrangler.toml:
-//     name = "jaci-birthday"
-//     main = "server/worker.ts"
-//     [vars] ADMIN_PASSWORD / AUTH_SECRET / CLOUDINARY_* via secrets
+// The database is Cloudflare D1 via the `DB` binding (server/storageD1.ts).
+// Media uploads go straight to Cloudinary (signed server-side); the Node-only
+// local file upload path is not available on Workers.
 
 import { createApp } from './app'
-import { createMemoryStorage } from './storage'
+import { createD1Storage, type D1DatabaseLike } from './storageD1'
 
-interface Env {
+export interface Env {
+  DB: D1DatabaseLike
   ADMIN_PASSWORD?: string
   AUTH_SECRET?: string
   CLOUDINARY_CLOUD_NAME?: string
@@ -22,22 +21,35 @@ interface Env {
   CLOUDINARY_FOLDER?: string
 }
 
-const app = createApp({
-  storage: createMemoryStorage(),
-  authSecret: (globalThis as any).AUTH_SECRET || 'set-a-secret-in-wrangler',
-  adminPassword: (globalThis as any).ADMIN_PASSWORD || '',
-  cloudinary:
-    (globalThis as any).CLOUDINARY_CLOUD_NAME && (globalThis as any).CLOUDINARY_API_KEY
+// The Hono app also holds a per-isolate in-memory map for secret-answer
+// attempt limiting. Cache the app per isolate so that map (and the storage
+// adapter) survive across requests — otherwise attempts would reset on
+// every request.
+let cachedApp: ReturnType<typeof createApp> | null = null
+
+function buildApp(env: Env) {
+  const cloudinary =
+    env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET
       ? {
-          cloudName: (globalThis as any).CLOUDINARY_CLOUD_NAME as string,
-          apiKey: (globalThis as any).CLOUDINARY_API_KEY as string,
-          apiSecret: (globalThis as any).CLOUDINARY_API_SECRET as string,
-          folder: (globalThis as any).CLOUDINARY_FOLDER || 'jacinta-birthday',
+          cloudName: env.CLOUDINARY_CLOUD_NAME,
+          apiKey: env.CLOUDINARY_API_KEY,
+          apiSecret: env.CLOUDINARY_API_SECRET,
+          folder: env.CLOUDINARY_FOLDER || 'jacinta-birthday',
         }
-      : undefined,
-  isProd: true,
-})
+      : undefined
+
+  return createApp({
+    storage: createD1Storage(env.DB),
+    authSecret: env.AUTH_SECRET || 'set-a-secret-in-wrangler',
+    adminPassword: env.ADMIN_PASSWORD || '',
+    cloudinary,
+    isProd: true,
+  })
+}
 
 export default {
-  fetch: app.fetch,
+  async fetch(request: Request, env: Env): Promise<Response> {
+    if (!cachedApp) cachedApp = buildApp(env)
+    return cachedApp.fetch(request)
+  },
 }

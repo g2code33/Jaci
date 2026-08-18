@@ -12,14 +12,24 @@ admin dashboard — no code changes required.
 
 - **React 18 + TypeScript + Vite**
 - **Tailwind CSS** + **Framer Motion**
-- **Hono** API (runs on Node for local dev, and deploys to Cloudflare Workers / Vercel)
+- **Hono** API — runs on Node for local dev, and deploys as a **Cloudflare Worker**
+- **Cloudflare D1** for the database (config, memories, media metadata, draft/published state)
+- **Cloudflare Workers Assets** for the static site
 - **Cloudinary** for photos / videos / audio (with a local-upload fallback)
 
 ```
 src/            frontend (components, sections, admin, hooks, lib, types, context)
-server/         framework-agnostic Hono API + storage/auth/Cloudinary + Node/Vite/Worker adapters
-data/           local store (draft + published config, uploaded media) — gitignored
+server/         framework-agnostic Hono API + storage/auth/Cloudinary + adapters
+  app.ts          the API (routes + logic) — runtime-agnostic
+  storage.ts      StorageAdapter interface (read/write of the whole config store)
+  storageD1.ts    Cloudflare D1 adapter (production database)
+  storageFile.ts  local JSON-file adapter (local Node dev / `npm start`)
+  worker.ts       Cloudflare Workers entry (uses D1)
+  nodeApp.ts      Node entry (dev plugin + `npm start`)
+migrations/     D1 SQL migrations
+data/           local store for the Node dev server (gitignored)
 public/         static assets
+wrangler.jsonc  Cloudflare Workers + Assets + D1 configuration
 ```
 
 ---
@@ -64,6 +74,10 @@ cp .env.example .env
 
 For local development without a `.env`, a dev password `jacinta-admin` is used with a
 warning in the console. In production, admin login is **disabled** unless `ADMIN_PASSWORD` is set.
+
+> These `.env` variables apply to the **Node** dev server (`npm run dev` / `npm start`).
+> On **Cloudflare**, the same values are set as Worker secrets via `wrangler secret put`
+> (see §15).
 
 ## 4. Configure Cloudinary
 
@@ -151,34 +165,72 @@ letter → surprise → closing) with a stage-jumper, **without publishing**.
 The public site always reads the **published** configuration. The answer is checked
 server-side, so drafts are safe.
 
-## 15. Deploy to Cloudflare / Vercel
+## 15. Deploy to Cloudflare (recommended)
 
-The API is a standard Hono app (`server/app.ts`), so it deploys anywhere Hono runs.
+The production backend is a **Cloudflare Worker** (serverless API) and the database is
+**Cloudflare D1**. One `wrangler.jsonc` deploys the static site (Workers Assets), the API,
+and the D1 database together.
 
-### Cloudflare Workers
+### 15a. What controls the backend & database
+
+| Concern | Where it lives |
+| --- | --- |
+| API logic & routes | `server/app.ts` (runtime-agnostic Hono app) |
+| Database access | `server/storageD1.ts` → Cloudflare **D1** (`env.DB` binding) |
+| Storage interface | `server/storage.ts` (`read()` / `write()` of the whole config) |
+| Worker entry | `server/worker.ts` |
+| Local Node dev storage | `server/storageFile.ts` → `data/config.json` (only for `npm run dev` / `npm start`) |
+| Database schema | `migrations/0001_init.sql` |
+
+The whole experience is driven by one centralised `Store` document (draft + published
+config + metadata), persisted as a single row in D1 (`config_store` table). Media files are
+never stored in the database — only their Cloudinary public IDs / URLs are.
+
+### 15b. Deploy steps
 
 ```bash
-npm run build
-npx wrangler deploy
+# 1. Log in to Cloudflare (once)
+npx wrangler login
+
+# 2. Create the D1 database and copy the returned database_id
+npm run cf:db:create
+#    → paste the id into wrangler.jsonc: "database_id": "<your-id>"
+
+# 3. Apply the schema to the database
+npm run cf:db:migrate
+
+# 4. Set secrets (kept out of git and out of the dashboard UI)
+npx wrangler secret put ADMIN_PASSWORD
+npx wrangler secret put AUTH_SECRET
+npx wrangler secret put CLOUDINARY_CLOUD_NAME
+npx wrangler secret put CLOUDINARY_API_KEY
+npx wrangler secret put CLOUDINARY_API_SECRET
+
+# 5. Build + deploy (static assets + Worker + D1)
+npm run cf:deploy
 ```
 
-Create `wrangler.toml` pointing `main` at `server/worker.ts` and set the secrets
-(`ADMIN_PASSWORD`, `AUTH_SECRET`, `CLOUDINARY_*`) with `wrangler secret put`. Note:
-`server/worker.ts` uses an in-memory store as a placeholder — swap `createMemoryStorage()`
-for a KV/D1 adapter (a small object with `read()`/`write()`), and use Cloudinary for media.
-
-### Vercel
-
-Point the serverless function at the same Hono app (`server/app.ts`) — e.g. an
-`api/[[...path]].ts` that imports and exports `createApp({...})`. Mount the Vite `dist/`
-as the static site. Same notes apply: use Vercel KV/Blob for storage, Cloudinary for media.
-
-### Any Node host
+### 15c. Run the full Cloudflare stack locally
 
 ```bash
-npm run build
-npm start        # serves dist/ + API + media on PORT (default 8787)
+npm run build            # build the static site once
+npm run cf:dev           # wrangler dev — local Worker + local D1 + assets
 ```
+
+`wrangler dev` reads local secrets from `.dev.vars` (gitignored — see `.dev.vars` in this
+repo) and uses a local D1 database under `.wrangler/state`.
+
+> Note: the Node-only local media upload (`/media/*`) is unavailable on Workers — use
+> Cloudinary for media in production. Secret-answer attempt limiting is per-isolate on
+> Workers (fine for a private surprise; the limit is enforced per browser session).
+
+### Alternatives
+
+- **Vercel**: mount the same Hono app (`server/app.ts`) in an `api/[[...path]].ts`
+  function, serve `dist/` as the static site, and use Vercel KV/Blob for storage +
+  Cloudinary for media.
+- **Any Node host**: `npm run build && npm start` — serves `dist/` + API + `/media/*` on
+  `PORT` (default 8787), using the JSON-file store.
 
 ---
 
