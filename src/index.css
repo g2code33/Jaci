@@ -1,0 +1,268 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: #08080c;
+  color: #f5eff4;
+  font-family: var(--font-body, 'Inter', system-ui, -apple-system, sans-serif);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(255, 79, 154, 0.35);
+  color: #fff;
+}
+
+/* Hide scrollbars but keep scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe-area helpers for notched phones */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── Typography ──────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-heading, 'Cormorant Garamond', Georgia, 'Times New Roman', serif);
+}
+
+.tracking-luxe {
+  letter-spacing: 0.34em;
+}
+
+/* ── Glow & effects ──────────────────────────────────────── */
+.text-glow {
+  text-shadow: 0 0 24px rgba(255, 122, 184, 0.55), 0 0 60px rgba(255, 79, 154, 0.3);
+}
+
+.text-glow-soft {
+  text-shadow: 0 0 18px rgba(255, 214, 232, 0.35);
+}
+
+.drop-glow {
+  filter: drop-shadow(0 0 10px rgba(255, 122, 184, 0.6)) drop-shadow(0 0 26px rgba(255, 79, 154, 0.35));
+}
+
+.glass {
+  background: rgba(20, 20, 30, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vignette::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* ── Animations ──────────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes heart-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.14);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.6s ease-in-out infinite;
+}
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
+}
+.animate-heart-beat {
+  animation: heart-beat 1.8s ease-in-out infinite;
+}
+
+.gradient-shimmer {
+  background-size: 200% auto;
+  animation: shimmer 6s linear infinite;
+}
+
+/* Elegant outlined button */
+.btn-outline {
+  @apply relative inline-flex items-center justify-center rounded-full border border-rose/40 px-8 py-3 font-body text-sm font-medium uppercase tracking-[0.22em] text-rose-pale transition-colors duration-300;
+  background: rgba(255, 79, 154, 0.06);
+}
+.btn-outline:hover {
+  background: rgba(255, 79, 154, 0.14);
+  border-color: rgba(255, 122, 184, 0.7);
+}
+.btn-outline:focus-visible {
+  outline: 2px solid rgba(255, 122, 184, 0.8);
+  outline-offset: 3px;
+}
+
+.btn-solid {
+  @apply relative inline-flex items-center justify-center rounded-full px-8 py-3 font-body text-sm font-medium uppercase tracking-[0.22em] text-white transition-all duration-300;
+  background: linear-gradient(135deg, #ff4f9a, #e63a86);
+  box-shadow: 0 8px 30px rgba(255, 79, 154, 0.35);
+}
+.btn-solid:hover {
+  box-shadow: 0 10px 40px rgba(255, 79, 154, 0.55);
+  transform: translateY(-1px);
+}
+.btn-solid:focus-visible {
+  outline: 2px solid rgba(255, 122, 184, 0.9);
+  outline-offset: 3px;
+}
+.btn-solid:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Focus ring for inputs */
+.input-luxe {
+  @apply w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-body text-base text-white placeholder-white/25 outline-none transition-colors duration-300;
+}
+.input-luxe:focus {
+  border-color: rgba(255, 122, 184, 0.6);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 4px rgba(255, 79, 154, 0.12);
+}
+
+/* ── Letter (rich text) ──────────────────────────────────── */
+.letter-body {
+  font-family: var(--font-heading, 'Cormorant Garamond', Georgia, serif);
+  color: rgba(245, 239, 244, 0.92);
+  font-size: 1.25rem;
+  line-height: 1.8;
+}
+.letter-body p {
+  margin-bottom: 1.25rem;
+}
+.letter-body p:last-child {
+  margin-bottom: 0;
+}
+.letter-body h2,
+.letter-body h3,
+.letter-body h4 {
+  font-weight: 400;
+  color: #ffd6e8;
+  margin: 1.4rem 0 0.6rem;
+}
+.letter-body b,
+.letter-body strong {
+  font-weight: 600;
+  color: #fff;
+}
+.letter-body i,
+.letter-body em {
+  font-style: italic;
+}
+.letter-body ul,
+.letter-body ol {
+  padding-left: 1.4rem;
+  margin-bottom: 1.25rem;
+}
+.letter-body li {
+  margin-bottom: 0.4rem;
+}
+.letter-body blockquote {
+  border-left: 2px solid rgba(255, 122, 184, 0.5);
+  padding-left: 1rem;
+  margin: 1.25rem 0;
+  color: rgba(255, 214, 232, 0.85);
+  font-style: italic;
+}
+.letter-body a {
+  color: #ff9ec4;
+  text-decoration: underline;
+}
+.letter-body hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin: 1.5rem 0;
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-glow,
+  .animate-float-slow,
+  .animate-heart-beat,
+  .gradient-shimmer {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.001ms !important;
+  }
+}
