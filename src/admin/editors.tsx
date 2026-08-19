@@ -4,6 +4,7 @@ import {
   ColorField,
   NumberField,
   RangeField,
+  ResetButton,
   SelectField,
   StringList,
   TextArea,
@@ -15,7 +16,8 @@ import { RichTextEditor } from '@/admin/RichTextEditor'
 import { getIn, moveIn, removeAt } from '@/lib/path'
 import { mediaUrl } from '@/lib/cloudinary'
 import { uid } from '@/lib/utils'
-import type { MediaItem, MessageCard, StoryEntry } from '@/types/config'
+import { STAGE_LABELS } from '@/lib/stages'
+import type { MediaItem, MessageCard, MusicTrack, StageBackground, StageId, StoryEntry } from '@/types/config'
 
 export function Section({
   title,
@@ -80,6 +82,11 @@ export function EntranceEditor() {
       </Grid>
       <StringList path="entrance.messages" label="Introduction lines" />
       <TextField path="entrance.closingLine" label="Closing line (optional)" />
+      <Card title="Ring">
+        <Toggle path="entrance.ringEnabled" label="Show the ring after the name" />
+        <TextField path="entrance.ringPrompt" label="Ring prompt" />
+        <TextField path="entrance.ringTakenMessage" label="Message after taking the ring" />
+      </Card>
       <Grid>
         <ColorField path="entrance.heartColor" label="Heart colour" />
         <ColorField path="entrance.background" label="Background" />
@@ -87,10 +94,13 @@ export function EntranceEditor() {
         <RangeField path="entrance.animationIntensity" label="Animation intensity" />
         <NumberField path="entrance.lineDuration" label="Line duration (ms)" min={500} max={10000} step={100} />
         <NumberField path="entrance.transitionDuration" label="Transition (ms)" min={100} max={4000} step={100} />
+        <NumberField path="entrance.initialDelay" label="Initial delay (ms)" min={0} max={6000} step={100} />
       </Grid>
       <Grid>
         <TextField path="heartIntro.beforeText" label="Heart intro — line 1" />
         <TextField path="heartIntro.promptText" label="Heart intro — line 2" />
+        <NumberField path="heartIntro.lineDuration" label="Intro line duration (ms)" min={500} max={10000} step={100} />
+        <NumberField path="heartIntro.transitionDuration" label="Intro fade (ms)" min={100} max={4000} step={100} />
       </Grid>
     </Section>
   )
@@ -106,6 +116,8 @@ export function ArrowEditor() {
         <Toggle path="arrow.enabled" label="Enabled" />
         <TextField path="arrow.instruction" label="Instruction" />
         <TextField path="arrow.impactMessage" label="Impact message (optional)" />
+        <NumberField path="arrow.flightDuration" label="Arrow flight (ms)" min={150} max={3000} step={50} />
+        <NumberField path="arrow.pierceDuration" label="Pierce hold before opening (ms)" min={200} max={5000} step={50} />
         <NumberField path="arrow.minPullDistance" label="Minimum pull distance" min={10} max={400} step={5} />
         <NumberField path="arrow.maxPullDistance" label="Maximum pull distance" min={20} max={600} step={5} />
         <SelectField
@@ -147,6 +159,8 @@ export function SecretLockEditor() {
         <TextField path="secretLock.teaserLine" label="Second line after unlocking" />
       </Grid>
       <Grid>
+        <NumberField path="secretLock.introDuration" label="Intro lines duration (ms)" min={500} max={10000} step={100} />
+        <NumberField path="secretLock.unlockDuration" label="Unlock celebration (ms)" min={500} max={8000} step={100} />
         <NumberField path="secretLock.maxAttempts" label="Max attempts (0 = unlimited)" min={0} max={100} step={1} />
         <Toggle path="secretLock.caseSensitive" label="Case sensitive" />
         <Toggle path="secretLock.trimWhitespace" label="Trim whitespace" />
@@ -178,6 +192,9 @@ export function ReadyEditor() {
         <TextField path="ready.sureButton" label="Sure button" />
         <TextField path="ready.waitButton" label="Wait button" />
         <TextField path="ready.introButton" label="Intro button" />
+        <NumberField path="ready.transitionDuration" label="Ready/sure fade (ms)" min={100} max={4000} step={100} />
+        <NumberField path="ready.introLineDuration" label="Intro line duration (ms)" min={500} max={10000} step={100} />
+        <NumberField path="ready.introFadeDuration" label="Intro fade (ms)" min={100} max={4000} step={100} />
       </Grid>
       <StringList path="ready.waitResponses" label="Wait responses" />
       <StringList path="ready.introLines" label="Story introduction lines" />
@@ -202,6 +219,7 @@ export function StoryEditor() {
       <Grid>
         <TextField path="story.title" label="Title" />
         <TextField path="story.subtitle" label="Subtitle" />
+        <NumberField path="story.animationDuration" label="Entry animation (ms)" min={100} max={4000} step={100} />
       </Grid>
       <div className="space-y-4">
         {entries.map((entry, i) => (
@@ -253,6 +271,7 @@ export function MemoriesEditor() {
       <Grid>
         <TextField path="memories.title" label="Title" />
         <TextField path="memories.subtitle" label="Subtitle" />
+        <NumberField path="memories.animationDuration" label="Entry animation (ms)" min={100} max={4000} step={100} />
       </Grid>
       <div className="space-y-3">
         {items.map((item, i) => (
@@ -311,6 +330,7 @@ export function ThingsEditor() {
       <Grid>
         <TextField path="things.title" label="Title" />
         <TextField path="things.subtitle" label="Subtitle" />
+        <NumberField path="things.animationDuration" label="Entry animation (ms)" min={100} max={4000} step={100} />
       </Grid>
       <div className="space-y-4">
         {cards.map((card, i) => (
@@ -348,6 +368,7 @@ export function HeartEditor() {
       <Grid>
         <TextField path="heartMoment.intro" label="Intro text" />
         <TextField path="heartMoment.buttonText" label="Continue button" />
+        <NumberField path="heartMoment.revealDuration" label="Reveal animation (ms)" min={100} max={5000} step={100} />
       </Grid>
       <TextArea path="heartMoment.message" label="Message revealed when she taps the heart" rows={3} />
     </Section>
@@ -366,7 +387,19 @@ export function BirthdayRevealEditor() {
         <TextField path="birthdayReveal.subText" label="Sub text (emoji / hearts)" />
         <ColorField path="birthdayReveal.accentColor" label="Accent colour" />
         <ColorField path="birthdayReveal.background" label="Background" />
+      </Grid>
+      <Card title="Age">
+        <Toggle path="birthdayReveal.showAge" label="Show her age in the reveal" />
+        <Grid>
+          <TextField path="birthdayReveal.age" label="Age (e.g. 22)" />
+          <TextField path="birthdayReveal.ageCaption" label="Caption after the age (e.g. years of you)" />
+        </Grid>
+      </Card>
+      <Grid>
         <RangeField path="birthdayReveal.intensity" label="Celebration intensity" />
+        <NumberField path="birthdayReveal.lineDuration" label="Intro line duration (ms)" min={500} max={10000} step={100} />
+        <NumberField path="birthdayReveal.fadeDuration" label="Intro fade (ms)" min={100} max={4000} step={100} />
+        <NumberField path="birthdayReveal.darkDuration" label="Darkness pause (ms)" min={200} max={6000} step={100} />
       </Grid>
       <Grid>
         <Toggle path="birthdayReveal.confetti" label="Confetti" />
@@ -382,7 +415,10 @@ export function BirthdayRevealEditor() {
 export function LetterEditor() {
   return (
     <Section title="Birthday Letter" description="Write the personal letter with rich text.">
-      <TextField path="letter.title" label="Title" />
+      <Grid>
+        <TextField path="letter.title" label="Title" />
+        <NumberField path="letter.revealDuration" label="Reveal animation (ms)" min={100} max={5000} step={100} />
+      </Grid>
       <RichTextEditor path="letter.body" label="Letter" />
     </Section>
   )
@@ -401,6 +437,8 @@ export function FinalSurpriseEditor() {
         <TextField path="finalSurprise.buttonText" label="Button text" />
         <TextField path="finalSurprise.dateTime" label="Date / time (optional)" />
         <TextField path="finalSurprise.location" label="Location (optional)" />
+        <NumberField path="finalSurprise.teaseDuration" label="Tease line duration (ms)" min={500} max={10000} step={100} />
+        <NumberField path="finalSurprise.fadeDuration" label="Tease fade (ms)" min={100} max={4000} step={100} />
       </Grid>
       <TextArea path="finalSurprise.message" label="Message" rows={3} />
       <TextArea path="finalSurprise.instructions" label="Instructions (optional)" rows={2} />
@@ -419,33 +457,70 @@ export function FinalSurpriseEditor() {
 export function MusicEditor() {
   const { draft, update, cloudinary } = useAdmin()
   const [open, setOpen] = useState(false)
+  const tracks = (getIn(draft, 'music.tracks') as MusicTrack[]) || []
+  const cloudName = draft.media.cloudName || cloudinary.cloudName
+
+  const addTrack = (track: MusicTrack) => update('music.tracks', [...tracks, track])
+
   return (
-    <Section title="Music" description="Optional background music (never forced to autoplay).">
+    <Section
+      title="Music"
+      description="A playlist of songs. The first tap anywhere in the experience (any major button) starts the music, and the floating controls let her play, pause, skip and adjust volume."
+    >
       <Toggle path="music.enabled" label="Music enabled" />
-      <TextField path="music.url" label="Music URL" hint="A direct audio URL (Cloudinary, /media/…, or external)." />
-      <TextField path="music.title" label="Title" />
       <Grid>
-        <Toggle path="music.autoplay" label="Try autoplay after first tap" />
-        <Toggle path="music.loop" label="Loop" />
+        <Toggle path="music.loop" label="Loop the playlist" />
       </Grid>
-      <button type="button" className="btn-outline !py-2 text-xs" onClick={() => setOpen(true)}>
-        Pick audio from library
-      </button>
+
+      <div className="space-y-4">
+        {tracks.map((track, i) => (
+          <Card
+            key={track.id}
+            title={track.title || `Song ${i + 1}`}
+            actions={
+              <div className="flex gap-1">
+                <IconButton label="Move up" disabled={i === 0} onClick={() => update('music.tracks', moveIn(draft, 'music.tracks', i, i - 1))}>↑</IconButton>
+                <IconButton label="Move down" disabled={i === tracks.length - 1} onClick={() => update('music.tracks', moveIn(draft, 'music.tracks', i, i + 1))}>↓</IconButton>
+                <IconButton label="Delete" onClick={() => update('music.tracks', removeAt(draft, 'music.tracks', i))}>✕</IconButton>
+              </div>
+            }
+          >
+            <Grid>
+              <TextField path={`music.tracks.${i}.title`} label="Title" />
+              <TextField path={`music.tracks.${i}.url`} label="Audio URL" hint="A direct audio URL (Cloudinary, /media/…, or external)." />
+            </Grid>
+            {track.url && <audio controls src={track.url} className="mt-2 w-full" preload="none" />}
+          </Card>
+        ))}
+        {tracks.length === 0 && (
+          <p className="font-display italic text-white/40">No songs yet — add one below.</p>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn-outline !py-2 text-xs"
+          onClick={() => addTrack({ id: uid(), title: '', url: '' })}
+        >
+          + Add a song
+        </button>
+        <button type="button" className="btn-outline !py-2 text-xs" onClick={() => setOpen(true)}>
+          + Pick audio from library
+        </button>
+      </div>
+
       {open && (
         <MediaLibraryModal
           filter={['audio']}
           title="Pick music"
           onClose={() => setOpen(false)}
           onPick={(item) => {
-            const url = mediaUrl(item, draft.media.cloudName || cloudinary.cloudName)
-            if (url) update('music.url', url)
-            if (item.caption) update('music.title', item.caption)
+            const url = mediaUrl(item, cloudName)
+            if (url) addTrack({ id: uid(), title: item.caption || item.alt || 'Song', url })
             setOpen(false)
           }}
         />
-      )}
-      {draft.music.url && (
-        <audio controls src={draft.music.url} className="mt-2 w-full" preload="none" />
       )}
     </Section>
   )
@@ -472,6 +547,82 @@ export function AppearanceEditor() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Stage backgrounds
+// ─────────────────────────────────────────────────────────────
+function StageBackgroundCard({ id, label }: { id: StageId; label: string }) {
+  const { draft, update } = useAdmin()
+  const base = `backgrounds.${id}`
+  const bg = (getIn(draft, base) as StageBackground) || { type: 'color' as const }
+  const isImage = bg.type === 'image'
+  const isVideo = bg.type === 'video'
+  const isMedia = isImage || isVideo
+  const isGradient = bg.type === 'gradient'
+
+  return (
+    <Card title={label} actions={<ResetButton path={base} />}>
+      <Grid>
+        <SelectField
+          path={`${base}.type`}
+          label="Background type"
+          options={[
+            { value: 'color', label: 'Colour' },
+            { value: 'gradient', label: 'Gradient' },
+            { value: 'image', label: 'Picture' },
+            { value: 'video', label: 'Video' },
+          ]}
+        />
+        {!isMedia && <ColorField path={`${base}.color`} label="Colour" />}
+        {isGradient && <ColorField path={`${base}.gradientFrom`} label="Gradient from" />}
+        {isGradient && <ColorField path={`${base}.gradientTo`} label="Gradient to" />}
+      </Grid>
+
+      {isMedia && (
+        <>
+          <MediaField
+            label={isVideo ? 'Background video' : 'Background picture'}
+            value={isVideo ? bg.video : bg.image}
+            filter={isVideo ? ['video'] : ['image']}
+            onChange={(item) => update(`${base}.${isVideo ? 'video' : 'image'}`, item)}
+          />
+          <Grid>
+            <RangeField path={`${base}.blur`} label="Gaussian blur (px)" min={0} max={50} step={1} />
+            <RangeField path={`${base}.brightness`} label="Brightness (%)" min={0} max={200} step={1} />
+            <RangeField path={`${base}.contrast`} label="Contrast (%)" min={0} max={200} step={1} />
+            <RangeField path={`${base}.saturate`} label="Saturation (%)" min={0} max={200} step={1} />
+            <RangeField path={`${base}.grayscale`} label="Grayscale (%)" min={0} max={100} step={1} />
+            <RangeField path={`${base}.sepia`} label="Sepia (%)" min={0} max={100} step={1} />
+            <RangeField path={`${base}.hue`} label="Hue rotate (deg)" min={0} max={360} step={1} />
+            <RangeField path={`${base}.opacity`} label="Opacity" min={0} max={1} step={0.05} />
+            <RangeField path={`${base}.scale`} label="Zoom" min={0.5} max={2} step={0.05} />
+            <RangeField path={`${base}.dim`} label="Dark overlay" min={0} max={1} step={0.05} />
+            <RangeField path={`${base}.tintOpacity`} label="Tint strength" min={0} max={1} step={0.05} />
+            <ColorField path={`${base}.tint`} label="Tint colour" />
+          </Grid>
+        </>
+      )}
+
+      <Grid>
+        <Toggle path={`${base}.waterDrop`} label="Water-drop effect" />
+        <RangeField path={`${base}.waterDropStrength`} label="Water-drop strength" min={0} max={1} step={0.05} />
+      </Grid>
+    </Card>
+  )
+}
+
+export function BackgroundsEditor() {
+  return (
+    <Section
+      title="Stage Backgrounds"
+      description="Give each stage its own background — a colour, a gradient, a picture, or a video with full editing (gaussian blur, brightness, contrast, saturation, grayscale, sepia, hue, zoom, tint and a water-drop effect)."
+    >
+      {STAGE_LABELS.map((s) => (
+        <StageBackgroundCard key={s.id} id={s.id} label={s.label} />
+      ))}
+    </Section>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
 // Settings
 // ─────────────────────────────────────────────────────────────
 export function SettingsEditor() {
@@ -490,6 +641,7 @@ export function SettingsEditor() {
         <TextField path="closing.message" label="Closing message" />
         <TextField path="closing.dateLabel" label="Date label" />
         <TextField path="closing.withLove" label="Sign-off" />
+        <NumberField path="closing.staggerDuration" label="Stagger between lines (ms)" min={200} max={6000} step={100} />
       </Card>
       <Card title="Easter eggs">
         <Toggle path="easterEggs.enabled" label="Enabled" />

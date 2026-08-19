@@ -10,11 +10,14 @@ html,
 body,
 #root {
   height: 100%;
+  min-height: 100%;
+  background-color: #08080c;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  background: #08080c;
 }
 
 body {
@@ -123,6 +126,38 @@ body {
   }
 }
 
+@keyframes flower-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ring-pulse {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.55;
+  }
+  70% {
+    opacity: 0.14;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.5) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15) rotate(180deg);
+  }
+}
+
 @keyframes heart-beat {
   0%,
   100% {
@@ -150,6 +185,15 @@ body {
 }
 .animate-heart-beat {
   animation: heart-beat 1.8s ease-in-out infinite;
+}
+.flower-spin {
+  animation: flower-spin 46s linear infinite;
+}
+.animate-ring-pulse {
+  animation: ring-pulse 2.6s ease-out infinite;
+}
+.animate-sparkle {
+  animation: sparkle 2.4s ease-in-out infinite;
 }
 
 .gradient-shimmer {

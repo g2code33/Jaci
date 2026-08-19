@@ -25,7 +25,7 @@ export function Story({ onDone }: Props) {
         )}
       </div>
 
-      <div className="relative w-full max-w-2xl">
+      <div className="relative w-full max-w-2xl lg:max-w-3xl">
         <span aria-hidden className="absolute left-[11px] top-2 bottom-2 w-px bg-gradient-to-b from-rose/50 via-rose/20 to-transparent" />
 
         <div className="flex flex-col gap-12">
@@ -37,7 +37,7 @@ export function Story({ onDone }: Props) {
                 initial={{ opacity: 0, y: 26 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: story.animationDuration / 1000, ease: [0.22, 1, 0.36, 1] }}
                 className="relative pl-10"
               >
                 <span

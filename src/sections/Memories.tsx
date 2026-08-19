@@ -29,7 +29,7 @@ export function Memories({ onDone }: Props) {
           This gallery is still being filled with memories…
         </p>
       ) : (
-        <div className="grid w-full max-w-4xl grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className="grid w-full max-w-4xl grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:max-w-5xl lg:grid-cols-4">
           {items.map((m, i) => (
             <motion.button
               key={m.id}
@@ -37,7 +37,7 @@ export function Memories({ onDone }: Props) {
               initial={{ opacity: 0, scale: 0.96 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, amount: 0.15 }}
-              transition={{ duration: 0.5, delay: (i % 6) * 0.06 }}
+              transition={{ duration: memories.animationDuration / 1000, delay: (i % 6) * 0.06 }}
               onClick={() => setLightbox(i)}
               className="group relative aspect-square overflow-hidden rounded-2xl border border-white/5"
               aria-label={m.caption || m.alt || 'Open memory'}

@@ -29,8 +29,8 @@ export function HeartIntro({ onDone }: Props) {
       {started && (
         <LineSequence
           lines={[hi.beforeText, hi.promptText]}
-          holdMs={2800}
-          fadeMs={1000}
+          holdMs={hi.lineDuration}
+          fadeMs={hi.transitionDuration}
           onDone={onDone}
           className="max-w-md font-display text-2xl font-light text-white/90 text-glow-soft sm:text-3xl"
         />

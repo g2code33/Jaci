@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Stage } from '@/components/Stage'
 import { GlowingHeart } from '@/components/GlowingHeart'
+import { RecapButtons } from '@/components/RecapButtons'
 import { useExperience } from '@/context/ExperienceContext'
 
 export function Closing() {
@@ -10,6 +11,7 @@ export function Closing() {
   const eggs = config.easterEggs
   const [egg, setEgg] = useState<string | null>(null)
   const tapRef = useRef(0)
+  const stagger = c.staggerDuration
 
   const hearts = useMemo(
     () =>
@@ -52,7 +54,7 @@ export function Closing() {
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2 }}
+          transition={{ duration: stagger / 1000 }}
           className="font-display text-4xl font-light leading-snug text-glow sm:text-6xl"
         >
           {c.message}
@@ -61,7 +63,7 @@ export function Closing() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.4, duration: 1 }}
+          transition={{ delay: stagger / 1000, duration: 0.9 }}
           className="mt-8 font-body text-sm uppercase tracking-[0.5em] text-white/50"
         >
           {c.dateLabel}
@@ -70,7 +72,7 @@ export function Closing() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2.2, duration: 1 }}
+          transition={{ delay: (stagger * 1.8) / 1000, duration: 0.9 }}
           className="mt-12 font-display text-xl italic text-white/70"
         >
           {c.withLove}
@@ -79,11 +81,19 @@ export function Closing() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2.8, duration: 1 }}
+          transition={{ delay: (stagger * 2.4) / 1000, duration: 0.9 }}
           className="mt-1 font-display text-3xl font-light text-rose-soft"
         >
           {config.senderName}
         </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: (stagger * 3) / 1000, duration: 0.9 }}
+        >
+          <RecapButtons />
+        </motion.div>
       </div>
 
       <AnimatePresence>

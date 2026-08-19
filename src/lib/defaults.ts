@@ -1,4 +1,31 @@
-import type { BirthdayConfig, Store } from '../types/config'
+import type { BirthdayConfig, StageBackground, Store } from '../types/config'
+
+/** A default, neutral background for a single stage. */
+function stageBg(overrides: Partial<StageBackground> = {}): StageBackground {
+  return {
+    type: 'color',
+    color: '#08080c',
+    gradientFrom: '#0e0e15',
+    gradientTo: '#1a1a24',
+    image: undefined,
+    video: undefined,
+    blur: 0,
+    brightness: 100,
+    contrast: 100,
+    saturate: 100,
+    grayscale: 0,
+    sepia: 0,
+    hue: 0,
+    opacity: 1,
+    scale: 1,
+    dim: 0.55,
+    tint: '#ff4f9a',
+    tintOpacity: 0,
+    waterDrop: false,
+    waterDropStrength: 0.6,
+    ...overrides,
+  }
+}
 
 /**
  * The default configuration used to seed the store on first run.
@@ -25,26 +52,34 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
     animationIntensity: 0.7,
     lineDuration: 2600,
     transitionDuration: 900,
+    initialDelay: 1100,
     background: '#08080c',
+    ringEnabled: true,
+    ringPrompt: 'Kindly tap on the ring to take it',
+    ringTakenMessage: "It's yours. ❤️",
   },
 
   heartIntro: {
     beforeText: 'Before you continue…',
     promptText: "There's one little thing I need you to do.",
+    lineDuration: 2800,
+    transitionDuration: 1000,
   },
 
   arrow: {
     enabled: true,
-    instruction: 'Pull the arrow back…',
+    instruction: 'Pull the arrow back and swipe up quickly…',
     arrowColor: '#ff7ab8',
     heartColor: '#ff4f9a',
     glow: 0.8,
     trailIntensity: 0.7,
+    flightDuration: 470,
+    pierceDuration: 850,
     minPullDistance: 70,
     maxPullDistance: 150,
     impactEffect: 'both',
     soundEffects: true,
-    impactMessage: '',
+    impactMessage: 'You opened my heart. ❤️',
   },
 
   secretLock: {
@@ -57,6 +92,8 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
     correctMessage: "I knew you'd remember. ❤️",
     unlockedMessage: 'You unlocked something…',
     teaserLine: "But there's one more thing.",
+    introDuration: 2600,
+    unlockDuration: 2100,
     maxAttempts: 0,
     caseSensitive: false,
     trimWhitespace: true,
@@ -82,11 +119,15 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
       "It's a little journey through some of the reasons you mean so much to me.",
     ],
     introButton: "LET'S GO ❤️",
+    transitionDuration: 600,
+    introLineDuration: 2300,
+    introFadeDuration: 950,
   },
 
   story: {
     title: 'Our Story',
     subtitle: 'Some moments deserve to be remembered.',
+    animationDuration: 700,
     entries: [
       {
         id: 'placeholder-1',
@@ -108,12 +149,14 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
   memories: {
     title: 'Memories',
     subtitle: 'Little fragments of us.',
+    animationDuration: 500,
     items: [],
   },
 
   things: {
     title: "Things I Don't Say Enough",
     subtitle: '',
+    animationDuration: 600,
     cards: [
       { id: 'thing-1', message: 'I appreciate you.' },
       { id: 'thing-2', message: 'I love the way you…' },
@@ -126,6 +169,7 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
     intro: "There's something I want you to remember.",
     message: 'You are so loved. ❤️',
     buttonText: 'continue ❤️',
+    revealDuration: 900,
   },
 
   birthdayReveal: {
@@ -137,11 +181,18 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
     fireworks: true,
     accentColor: '#ff4f9a',
     background: '#08080c',
+    lineDuration: 2400,
+    fadeDuration: 1000,
+    darkDuration: 1000,
+    showAge: true,
+    age: '22',
+    ageCaption: 'years of you',
   },
 
   letter: {
     title: 'A letter for you.',
     body: '<p>My dearest Jacinta,</p><p>This is where your letter will live. Open the admin dashboard and write it — tell her everything you want her to know.</p><p>With all my love.</p>',
+    revealDuration: 1000,
   },
 
   finalSurprise: {
@@ -153,19 +204,20 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
     instructions: '',
     dateTime: '',
     location: '',
+    teaseDuration: 2300,
+    fadeDuration: 900,
   },
 
   closing: {
     message: 'Happy Birthday, Jacinta. ❤️',
     dateLabel: '22.08.2026',
     withLove: 'With love,',
+    staggerDuration: 1100,
   },
 
   music: {
     enabled: false,
-    url: '',
-    title: '',
-    autoplay: false,
+    tracks: [],
     loop: true,
   },
 
@@ -195,6 +247,24 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
   media: {
     cloudName: '',
     library: [],
+  },
+
+  backgrounds: {
+    countdown: stageBg(),
+    entrance: stageBg(),
+    heart: stageBg(),
+    arrow: stageBg(),
+    lock: stageBg(),
+    ready: stageBg(),
+    intro: stageBg(),
+    story: stageBg(),
+    memories: stageBg(),
+    things: stageBg(),
+    heartmoment: stageBg(),
+    reveal: stageBg(),
+    letter: stageBg(),
+    surprise: stageBg(),
+    closing: stageBg(),
   },
 }
 

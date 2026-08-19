@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAdmin } from '@/admin/AdminContext'
+import { DEFAULT_CONFIG } from '@/lib/defaults'
 import { getIn, moveIn, removeAt } from '@/lib/path'
 import { cn } from '@/lib/utils'
 
@@ -12,6 +13,31 @@ function useField(path: string) {
   const { draft, update } = useAdmin()
   const value = getIn(draft, path)
   return { value, set: (v: unknown) => update(path, v) }
+}
+
+function defaultValue(path: string): unknown {
+  return JSON.parse(JSON.stringify(getIn(DEFAULT_CONFIG, path)))
+}
+
+/** Restores a single field to its default value. */
+export function ResetButton({ path, onReset }: { path: string; onReset?: () => void }) {
+  const { update } = useAdmin()
+  return (
+    <button
+      type="button"
+      title="Reset to default"
+      aria-label="Reset to default"
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        update(path, defaultValue(path))
+        onReset?.()
+      }}
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-sm text-white/40 transition hover:bg-white/15 hover:text-white"
+    >
+      ↺
+    </button>
+  )
 }
 
 export function Field({ label, hint, children }: { label?: string; hint?: string; children: React.ReactNode }) {
@@ -38,7 +64,10 @@ export function TextField({
   const { value, set } = useField(path)
   return (
     <Field label={label} hint={hint}>
-      <input className={inputCls} value={String(value ?? '')} onChange={(e) => set(e.target.value)} placeholder={placeholder} />
+      <div className="flex items-center gap-1.5">
+        <input className={inputCls} value={String(value ?? '')} onChange={(e) => set(e.target.value)} placeholder={placeholder} />
+        <ResetButton path={path} />
+      </div>
     </Field>
   )
 }
@@ -59,7 +88,10 @@ export function TextArea({
   const { value, set } = useField(path)
   return (
     <Field label={label} hint={hint}>
-      <textarea className={cn(inputCls, 'resize-y leading-relaxed')} rows={rows} value={String(value ?? '')} onChange={(e) => set(e.target.value)} placeholder={placeholder} />
+      <div className="flex items-start gap-1.5">
+        <textarea className={cn(inputCls, 'resize-y leading-relaxed')} rows={rows} value={String(value ?? '')} onChange={(e) => set(e.target.value)} placeholder={placeholder} />
+        <ResetButton path={path} />
+      </div>
     </Field>
   )
 }
@@ -82,15 +114,18 @@ export function NumberField({
   const { value, set } = useField(path)
   return (
     <Field label={label} hint={hint}>
-      <input
-        className={inputCls}
-        type="number"
-        value={Number(value ?? 0)}
-        min={min}
-        max={max}
-        step={step}
-        onChange={(e) => set(e.target.value === '' ? 0 : Number(e.target.value))}
-      />
+      <div className="flex items-center gap-1.5">
+        <input
+          className={inputCls}
+          type="number"
+          value={Number(value ?? 0)}
+          min={min}
+          max={max}
+          step={step}
+          onChange={(e) => set(e.target.value === '' ? 0 : Number(e.target.value))}
+        />
+        <ResetButton path={path} />
+      </div>
     </Field>
   )
 }
@@ -100,7 +135,7 @@ export function ColorField({ path, label, hint }: { path: string; label?: string
   const hex = String(value || '#ff4f9a')
   return (
     <Field label={label} hint={hint}>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <input
           type="color"
           value={/^#[0-9a-f]{6}$/i.test(hex) ? hex : '#ff4f9a'}
@@ -108,6 +143,7 @@ export function ColorField({ path, label, hint }: { path: string; label?: string
           className="h-9 w-11 cursor-pointer rounded-lg border border-white/10 bg-transparent"
         />
         <input className={inputCls} value={hex} onChange={(e) => set(e.target.value)} />
+        <ResetButton path={path} />
       </div>
     </Field>
   )
@@ -122,23 +158,26 @@ export function Toggle({ path, label, hint }: { path: string; label?: string; hi
         {label && <span className="block text-sm font-medium text-white/80">{label}</span>}
         {hint && <span className="block text-[11px] text-white/35">{hint}</span>}
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        onClick={() => set(!on)}
-        className={cn(
-          'relative h-6 w-11 shrink-0 rounded-full transition-colors duration-300',
-          on ? 'bg-rose' : 'bg-white/10',
-        )}
-      >
-        <span
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={on}
+          onClick={() => set(!on)}
           className={cn(
-            'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all duration-300',
-            on ? 'left-[22px]' : 'left-0.5',
+            'relative h-6 w-11 shrink-0 rounded-full transition-colors duration-300',
+            on ? 'bg-rose' : 'bg-white/10',
           )}
-        />
-      </button>
+        >
+          <span
+            className={cn(
+              'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all duration-300',
+              on ? 'left-[22px]' : 'left-0.5',
+            )}
+          />
+        </button>
+        <ResetButton path={path} />
+      </div>
     </div>
   )
 }
@@ -157,13 +196,16 @@ export function SelectField({
   const { value, set } = useField(path)
   return (
     <Field label={label} hint={hint}>
-      <select className={cn(inputCls, 'appearance-none')} value={String(value ?? '')} onChange={(e) => set(e.target.value)}>
-        {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-night-800">
-            {o.label}
-          </option>
-        ))}
-      </select>
+      <div className="flex items-center gap-1.5">
+        <select className={cn(inputCls, 'appearance-none')} value={String(value ?? '')} onChange={(e) => set(e.target.value)}>
+          {options.map((o) => (
+            <option key={o.value} value={o.value} className="bg-night-800">
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <ResetButton path={path} />
+      </div>
     </Field>
   )
 }
@@ -198,6 +240,7 @@ export function RangeField({
           onChange={(e) => set(Number(e.target.value))}
         />
         <span className="w-12 shrink-0 text-right font-mono text-xs text-white/60">{v.toFixed(2)}</span>
+        <ResetButton path={path} />
       </div>
     </Field>
   )
@@ -217,7 +260,12 @@ export function StringList({ path, label, hint }: { path: string; label?: string
 
   return (
     <div>
-      {label && <span className={labelCls}>{label}</span>}
+      {label && (
+        <span className={cn(labelCls, 'flex items-center gap-1.5')}>
+          {label}
+          <ResetButton path={path} />
+        </span>
+      )}
       <div className="flex flex-col gap-2">
         {list.map((item, i) => (
           <div key={i} className="flex items-center gap-2">

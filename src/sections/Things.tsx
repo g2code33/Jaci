@@ -21,14 +21,14 @@ export function Things({ onDone }: Props) {
         )}
       </div>
 
-      <div className="grid w-full max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="grid w-full max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2 lg:max-w-4xl">
         {cards.map((card, i) => (
           <motion.div
             key={card.id}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.6, delay: (i % 2) * 0.1 }}
+            transition={{ duration: things.animationDuration / 1000, delay: (i % 2) * 0.1 }}
             className="glass rounded-3xl p-7 text-left"
           >
             {card.title && (

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
 import { GlowingHeart } from '@/components/GlowingHeart'
 
@@ -30,7 +31,13 @@ export function Login({ onSuccess }: LoginProps) {
   }
 
   return (
-    <div className="flex min-h-[100dvh] w-full items-center justify-center bg-night-900 px-6">
+    <div className="relative flex min-h-[100dvh] w-full items-center justify-center bg-night-900 px-6">
+      <Link
+        to="/"
+        className="absolute left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-white/5 px-4 py-2 font-body text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+      >
+        ← Back to the experience
+      </Link>
       <motion.form
         onSubmit={submit}
         initial={{ opacity: 0, y: 16 }}

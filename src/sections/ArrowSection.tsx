@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Stage } from '@/components/Stage'
-import { BowArrow } from '@/components/BowArrow'
+import { WishArrow } from '@/components/WishArrow'
 import { GlowingHeart } from '@/components/GlowingHeart'
 import { useExperience } from '@/context/ExperienceContext'
 import { isSoundMuted, setSoundMuted } from '@/lib/sound'
@@ -31,11 +31,13 @@ export function ArrowSection({ onDone }: Props) {
 
   return (
     <Stage full style={{ touchAction: 'none' }}>
-      <BowArrow
+      <WishArrow
         arrowColor={a.arrowColor}
         heartColor={a.heartColor}
         glow={a.glow}
         trailIntensity={a.trailIntensity}
+        flightDuration={a.flightDuration}
+        pierceDuration={a.pierceDuration}
         minPull={a.minPullDistance}
         maxPull={a.maxPullDistance}
         soundEffects={a.soundEffects}

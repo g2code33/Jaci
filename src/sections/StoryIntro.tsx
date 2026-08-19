@@ -17,8 +17,8 @@ export function StoryIntro({ onDone }: Props) {
     <Stage>
       <LineSequence
         lines={r.introLines}
-        holdMs={2300}
-        fadeMs={950}
+        holdMs={r.introLineDuration}
+        fadeMs={r.introFadeDuration}
         onDone={() => setShowButton(true)}
         className="max-w-2xl font-display text-2xl font-light text-white/90 text-glow-soft sm:text-3xl"
       />

@@ -31,7 +31,7 @@ export function Ready({ onDone }: Props) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: r.transitionDuration / 1000 }}
             className="flex flex-col items-center"
           >
             <h2 className="font-display text-4xl font-light text-glow sm:text-5xl">{r.readyText}</h2>
@@ -45,7 +45,7 @@ export function Ready({ onDone }: Props) {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: r.transitionDuration / 1000 }}
             className="flex flex-col items-center"
           >
             <h2 className="font-display text-4xl font-light text-glow sm:text-5xl">{r.sureText}</h2>

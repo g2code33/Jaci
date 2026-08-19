@@ -22,9 +22,9 @@ export function BirthdayReveal({ onDone }: Props) {
 
   useEffect(() => {
     if (phase !== 'dark') return
-    const t = setTimeout(() => setPhase('reveal'), 1000)
+    const t = setTimeout(() => setPhase('reveal'), br.darkDuration)
     return () => clearTimeout(t)
-  }, [phase])
+  }, [phase, br.darkDuration])
 
   const finish = () => {
     if (doneRef.current) return
@@ -40,8 +40,8 @@ export function BirthdayReveal({ onDone }: Props) {
       {phase === 'pre' && (
         <LineSequence
           lines={br.preLines}
-          holdMs={2400}
-          fadeMs={1000}
+          holdMs={br.lineDuration}
+          fadeMs={br.fadeDuration}
           onDone={() => setPhase('dark')}
           className="max-w-xl font-display text-3xl font-light text-white/90 text-glow-soft sm:text-4xl"
         />
@@ -75,18 +75,32 @@ export function BirthdayReveal({ onDone }: Props) {
               </span>
             </motion.div>
 
+            {br.showAge && br.age && (
+              <motion.p
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.4, duration: 1 }}
+                className="mt-8 font-display text-2xl italic text-rose-soft sm:text-3xl"
+              >
+                {br.age}
+                {br.ageCaption ? (
+                  <span className="ml-2 text-lg text-white/50 sm:text-xl">{br.ageCaption}</span>
+                ) : null}
+              </motion.p>
+            )}
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.5, duration: 1 }}
-              className="mt-10 font-body text-xs uppercase tracking-[0.5em] text-champagne sm:text-sm"
+              transition={{ delay: 1.8, duration: 1 }}
+              className="mt-8 font-body text-xs uppercase tracking-[0.5em] text-champagne sm:text-sm"
             >
               {br.happyText}
             </motion.p>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.9, duration: 1 }}
+              transition={{ delay: 2.2, duration: 1 }}
               className="mt-3 font-display text-4xl font-light leading-tight text-glow sm:text-6xl"
             >
               {config.name}
@@ -95,7 +109,7 @@ export function BirthdayReveal({ onDone }: Props) {
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 2.4, duration: 0.8 }}
+                transition={{ delay: 2.7, duration: 0.8 }}
                 className="mt-3 text-2xl"
               >
                 {br.subText}
@@ -105,7 +119,7 @@ export function BirthdayReveal({ onDone }: Props) {
             <motion.button
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 3 }}
+              transition={{ delay: 3.2 }}
               type="button"
               className="btn-outline mt-12"
               onClick={finish}

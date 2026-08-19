@@ -64,7 +64,7 @@ export function HeartMoment({ onDone }: Props) {
             <motion.p
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.9 }}
+              transition={{ delay: 0.5, duration: hm.revealDuration / 1000 }}
               className="mt-10 max-w-lg font-display text-3xl font-light leading-snug text-glow sm:text-4xl"
             >
               {hm.message}

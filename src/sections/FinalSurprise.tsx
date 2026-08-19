@@ -28,8 +28,8 @@ export function FinalSurprise({ onDone }: Props) {
           >
             <LineSequence
               lines={fs.teaseLines}
-              holdMs={2300}
-              fadeMs={900}
+              holdMs={fs.teaseDuration}
+              fadeMs={fs.fadeDuration}
               onDone={() => setShowButton(true)}
               className="max-w-lg font-display text-3xl font-light text-white/90 text-glow-soft sm:text-4xl"
             />

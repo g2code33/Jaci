@@ -1,0 +1,1036 @@
+diff --git a/server/app.ts b/server/app.ts
+index ff95f1d..1a9c7a0 100644
+--- a/server/app.ts
++++ b/server/app.ts
+@@ -111,10 +111,13 @@ export function createApp(deps: AppDeps): Hono {
+ 
+   app.get('/api/config', async (c) => {
+     const store = await deps.storage.read()
++    // Merge over defaults so configs saved by older versions still get
++    // any newly-added fields filled in.
++    const config = mergeConfig(store.published)
+     return c.json({
+-      config: store.published,
++      config,
+       meta: {
+-        cloudName: store.published.media.cloudName || deps.cloudinary?.cloudName || '',
++        cloudName: config.media.cloudName || deps.cloudinary?.cloudName || '',
+         publishedAt: store.meta.publishedAt || null,
+       },
+     })
+@@ -206,8 +209,8 @@ export function createApp(deps: AppDeps): Hono {
+   app.get('/api/admin/config', async (c) => {
+     const store = await deps.storage.read()
+     return c.json({
+-      draft: store.draft,
+-      published: store.published,
++      draft: mergeConfig(store.draft),
++      published: mergeConfig(store.published),
+       meta: store.meta,
+       cloudinary: deps.cloudinary
+         ? { enabled: true, cloudName: deps.cloudinary.cloudName, folder: deps.cloudinary.folder }
+diff --git a/src/admin/editors.tsx b/src/admin/editors.tsx
+index 16af2bb..c5139fd 100644
+--- a/src/admin/editors.tsx
++++ b/src/admin/editors.tsx
+@@ -87,10 +87,13 @@ export function EntranceEditor() {
+         <RangeField path="entrance.animationIntensity" label="Animation intensity" />
+         <NumberField path="entrance.lineDuration" label="Line duration (ms)" min={500} max={10000} step={100} />
+         <NumberField path="entrance.transitionDuration" label="Transition (ms)" min={100} max={4000} step={100} />
++        <NumberField path="entrance.initialDelay" label="Initial delay (ms)" min={0} max={6000} step={100} />
+       </Grid>
+       <Grid>
+         <TextField path="heartIntro.beforeText" label="Heart intro — line 1" />
+         <TextField path="heartIntro.promptText" label="Heart intro — line 2" />
++        <NumberField path="heartIntro.lineDuration" label="Intro line duration (ms)" min={500} max={10000} step={100} />
++        <NumberField path="heartIntro.transitionDuration" label="Intro fade (ms)" min={100} max={4000} step={100} />
+       </Grid>
+     </Section>
+   )
+@@ -106,6 +109,8 @@ export function ArrowEditor() {
+         <Toggle path="arrow.enabled" label="Enabled" />
+         <TextField path="arrow.instruction" label="Instruction" />
+         <TextField path="arrow.impactMessage" label="Impact message (optional)" />
++        <NumberField path="arrow.flightDuration" label="Arrow flight (ms)" min={150} max={3000} step={50} />
++        <NumberField path="arrow.pierceDuration" label="Pierce hold before opening (ms)" min={200} max={5000} step={50} />
+         <NumberField path="arrow.minPullDistance" label="Minimum pull distance" min={10} max={400} step={5} />
+         <NumberField path="arrow.maxPullDistance" label="Maximum pull distance" min={20} max={600} step={5} />
+         <SelectField
+@@ -147,6 +152,8 @@ export function SecretLockEditor() {
+         <TextField path="secretLock.teaserLine" label="Second line after unlocking" />
+       </Grid>
+       <Grid>
++        <NumberField path="secretLock.introDuration" label="Intro lines duration (ms)" min={500} max={10000} step={100} />
++        <NumberField path="secretLock.unlockDuration" label="Unlock celebration (ms)" min={500} max={8000} step={100} />
+         <NumberField path="secretLock.maxAttempts" label="Max attempts (0 = unlimited)" min={0} max={100} step={1} />
+         <Toggle path="secretLock.caseSensitive" label="Case sensitive" />
+         <Toggle path="secretLock.trimWhitespace" label="Trim whitespace" />
+@@ -178,6 +185,9 @@ export function ReadyEditor() {
+         <TextField path="ready.sureButton" label="Sure button" />
+         <TextField path="ready.waitButton" label="Wait button" />
+         <TextField path="ready.introButton" label="Intro button" />
++        <NumberField path="ready.transitionDuration" label="Ready/sure fade (ms)" min={100} max={4000} step={100} />
++        <NumberField path="ready.introLineDuration" label="Intro line duration (ms)" min={500} max={10000} step={100} />
++        <NumberField path="ready.introFadeDuration" label="Intro fade (ms)" min={100} max={4000} step={100} />
+       </Grid>
+       <StringList path="ready.waitResponses" label="Wait responses" />
+       <StringList path="ready.introLines" label="Story introduction lines" />
+@@ -202,6 +212,7 @@ export function StoryEditor() {
+       <Grid>
+         <TextField path="story.title" label="Title" />
+         <TextField path="story.subtitle" label="Subtitle" />
++        <NumberField path="story.animationDuration" label="Entry animation (ms)" min={100} max={4000} step={100} />
+       </Grid>
+       <div className="space-y-4">
+         {entries.map((entry, i) => (
+@@ -253,6 +264,7 @@ export function MemoriesEditor() {
+       <Grid>
+         <TextField path="memories.title" label="Title" />
+         <TextField path="memories.subtitle" label="Subtitle" />
++        <NumberField path="memories.animationDuration" label="Entry animation (ms)" min={100} max={4000} step={100} />
+       </Grid>
+       <div className="space-y-3">
+         {items.map((item, i) => (
+@@ -311,6 +323,7 @@ export function ThingsEditor() {
+       <Grid>
+         <TextField path="things.title" label="Title" />
+         <TextField path="things.subtitle" label="Subtitle" />
++        <NumberField path="things.animationDuration" label="Entry animation (ms)" min={100} max={4000} step={100} />
+       </Grid>
+       <div className="space-y-4">
+         {cards.map((card, i) => (
+@@ -348,6 +361,7 @@ export function HeartEditor() {
+       <Grid>
+         <TextField path="heartMoment.intro" label="Intro text" />
+         <TextField path="heartMoment.buttonText" label="Continue button" />
++        <NumberField path="heartMoment.revealDuration" label="Reveal animation (ms)" min={100} max={5000} step={100} />
+       </Grid>
+       <TextArea path="heartMoment.message" label="Message revealed when she taps the heart" rows={3} />
+     </Section>
+@@ -367,6 +381,9 @@ export function BirthdayRevealEditor() {
+         <ColorField path="birthdayReveal.accentColor" label="Accent colour" />
+         <ColorField path="birthdayReveal.background" label="Background" />
+         <RangeField path="birthdayReveal.intensity" label="Celebration intensity" />
++        <NumberField path="birthdayReveal.lineDuration" label="Intro line duration (ms)" min={500} max={10000} step={100} />
++        <NumberField path="birthdayReveal.fadeDuration" label="Intro fade (ms)" min={100} max={4000} step={100} />
++        <NumberField path="birthdayReveal.darkDuration" label="Darkness pause (ms)" min={200} max={6000} step={100} />
+       </Grid>
+       <Grid>
+         <Toggle path="birthdayReveal.confetti" label="Confetti" />
+@@ -382,7 +399,10 @@ export function BirthdayRevealEditor() {
+ export function LetterEditor() {
+   return (
+     <Section title="Birthday Letter" description="Write the personal letter with rich text.">
+-      <TextField path="letter.title" label="Title" />
++      <Grid>
++        <TextField path="letter.title" label="Title" />
++        <NumberField path="letter.revealDuration" label="Reveal animation (ms)" min={100} max={5000} step={100} />
++      </Grid>
+       <RichTextEditor path="letter.body" label="Letter" />
+     </Section>
+   )
+@@ -401,6 +421,8 @@ export function FinalSurpriseEditor() {
+         <TextField path="finalSurprise.buttonText" label="Button text" />
+         <TextField path="finalSurprise.dateTime" label="Date / time (optional)" />
+         <TextField path="finalSurprise.location" label="Location (optional)" />
++        <NumberField path="finalSurprise.teaseDuration" label="Tease line duration (ms)" min={500} max={10000} step={100} />
++        <NumberField path="finalSurprise.fadeDuration" label="Tease fade (ms)" min={100} max={4000} step={100} />
+       </Grid>
+       <TextArea path="finalSurprise.message" label="Message" rows={3} />
+       <TextArea path="finalSurprise.instructions" label="Instructions (optional)" rows={2} />
+@@ -490,6 +512,7 @@ export function SettingsEditor() {
+         <TextField path="closing.message" label="Closing message" />
+         <TextField path="closing.dateLabel" label="Date label" />
+         <TextField path="closing.withLove" label="Sign-off" />
++        <NumberField path="closing.staggerDuration" label="Stagger between lines (ms)" min={200} max={6000} step={100} />
+       </Card>
+       <Card title="Easter eggs">
+         <Toggle path="easterEggs.enabled" label="Enabled" />
+diff --git a/src/components/BowArrow.tsx b/src/components/BowArrow.tsx
+index 3811100..5c1d85e 100644
+--- a/src/components/BowArrow.tsx
++++ b/src/components/BowArrow.tsx
+@@ -25,6 +25,8 @@ interface BowArrowProps {
+   maxPull: number
+   soundEffects: boolean
+   impactEffect: 'heartBurst' | 'shockwave' | 'both'
++  flightDuration: number
++  pierceDuration: number
+   instruction: string
+   releaseInstruction?: string
+   impactMessage?: string
+@@ -72,6 +74,8 @@ export function BowArrow({
+   maxPull,
+   soundEffects,
+   impactEffect,
++  flightDuration,
++  pierceDuration,
+   instruction,
+   releaseInstruction = 'Let go…',
+   impactMessage,
+@@ -105,9 +109,16 @@ export function BowArrow({
+   const pierceRef = useRef<{ x: number; y: number; t0: number } | null>(null)
+   const pierceTimerRef = useRef<number | null>(null)
+   const heartSizeRef = useRef(0)
++  const flightDurationRef = useRef(flightDuration)
++  const pierceDurationRef = useRef(pierceDuration)
+   const onImpactRef = useRef(onImpact)
+   onImpactRef.current = onImpact
+ 
++  useEffect(() => {
++    flightDurationRef.current = flightDuration
++    pierceDurationRef.current = pierceDuration
++  }, [flightDuration, pierceDuration])
++
+   const particles = useRef<FX[]>([])
+   const rings = useRef<Ring[]>([])
+   const flashes = useRef<FX[]>([])
+@@ -220,7 +231,7 @@ export function BowArrow({
+         spawnFlash(x, y, heartColor)
+         spawnBurst(x, y, 46, '#ffd6e8')
+         if (soundEffects) playChime()
+-      }, 850)
++      }, pierceDurationRef.current)
+     },
+     [heartColor, impactEffect, soundEffects, spawnBurst, spawnFlash, spawnShockwave],
+   )
+@@ -294,7 +305,7 @@ export function BowArrow({
+         const p = pierceRef.current
+         const elapsed = now - p.t0
+         const opening = phaseRef.current === 'opening' || phaseRef.current === 'done'
+-        const alpha = opening ? Math.max(0, 1 - (elapsed - 850) / 480) : 1
++        const alpha = opening ? Math.max(0, 1 - (elapsed - pierceDurationRef.current) / 480) : 1
+         if (alpha <= 0) {
+           pierceRef.current = null
+         } else {
+@@ -417,7 +428,7 @@ export function BowArrow({
+             ex: end.x,
+             ey: end.y,
+             t0: performance.now(),
+-            dur: 470,
++            dur: flightDurationRef.current,
+           }
+           phaseRef.current = 'flying'
+           setPhase('flying')
+diff --git a/src/components/Experience.tsx b/src/components/Experience.tsx
+index 10905aa..3f9301c 100644
+--- a/src/components/Experience.tsx
++++ b/src/components/Experience.tsx
+@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
+ import { ExperienceProvider, type ExperienceMeta } from '@/context/ExperienceContext'
+ import { AmbientParticles } from '@/components/AmbientParticles'
+ import { MusicPlayer } from '@/components/MusicPlayer'
++import { FlowerButton } from '@/components/FlowerButton'
+ import { clamp, isBirthdayNow } from '@/lib/utils'
+ import type { BirthdayConfig } from '@/types/config'
+ import { Countdown } from '@/sections/Countdown'
+@@ -129,6 +130,19 @@ export function Experience({
+     })
+   }, [stages, preview])
+ 
++  const restart = useCallback(() => {
++    if (!preview) {
++      try {
++        window.sessionStorage.removeItem('jaci_stage')
++        window.sessionStorage.removeItem('jaci_unlocked')
++      } catch {
++        // ignore
++      }
++    }
++    setIdx(0)
++    scrollRef.current?.scrollTo({ top: 0 })
++  }, [preview])
++
+   useEffect(() => {
+     if (preview) return
+     try {
+@@ -206,6 +220,8 @@ export function Experience({
+ 
+         <MusicPlayer />
+ 
++        <FlowerButton onRestart={restart} />
++
+         {preview && (
+           <div className="glass fixed bottom-4 left-4 z-[70] flex max-w-[80vw] items-center gap-2 rounded-2xl p-2">
+             <button
+diff --git a/src/components/FlowerButton.tsx b/src/components/FlowerButton.tsx
+new file mode 100644
+index 0000000..4639ba0
+--- /dev/null
++++ b/src/components/FlowerButton.tsx
+@@ -0,0 +1,109 @@
++import { useEffect, useRef, useState } from 'react'
++import { AnimatePresence, motion } from 'framer-motion'
++import { useExperience } from '@/context/ExperienceContext'
++
++interface FlowerButtonProps {
++  onRestart: () => void
++}
++
++/** A delicate flower used as the restart control on every page. */
++export function FlowerButton({ onRestart }: FlowerButtonProps) {
++  const { config } = useExperience()
++  const accent = config.appearance.accentColor || '#ff4f9a'
++  const [confirming, setConfirming] = useState(false)
++  const timer = useRef<number | null>(null)
++
++  useEffect(() => {
++    return () => {
++      if (timer.current) window.clearTimeout(timer.current)
++    }
++  }, [])
++
++  const handleClick = () => {
++    if (!confirming) {
++      setConfirming(true)
++      timer.current = window.setTimeout(() => setConfirming(false), 2600)
++      return
++    }
++    if (timer.current) window.clearTimeout(timer.current)
++    setConfirming(false)
++    onRestart()
++  }
++
++  return (
++    <div className="pointer-events-none fixed inset-x-0 top-0 z-[55] flex justify-center">
++      <div className="pointer-events-auto relative flex flex-col items-center pt-safe">
++        <button
++          type="button"
++          onClick={handleClick}
++          aria-label="Restart the experience"
++          title="Restart"
++          className="group relative -mt-1 flex h-11 w-11 items-center justify-center rounded-full opacity-70 transition-all duration-300 hover:scale-110 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none"
++        >
++          <span
++            aria-hidden
++            className="absolute inset-0 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100"
++            style={{ background: `radial-gradient(circle, ${accent}33 0%, transparent 70%)` }}
++          />
++          <FlowerIcon color={accent} className="flower-spin relative drop-glow" />
++        </button>
++
++        <AnimatePresence>
++          {confirming && (
++            <motion.span
++              initial={{ opacity: 0, y: -6 }}
++              animate={{ opacity: 1, y: 0 }}
++              exit={{ opacity: 0, y: -6 }}
++              className="glass mt-1 whitespace-nowrap rounded-full px-3 py-1 font-body text-[11px] tracking-wide text-white/85"
++            >
++              Tap again to restart
++            </motion.span>
++          )}
++        </AnimatePresence>
++      </div>
++    </div>
++  )
++}
++
++export function FlowerIcon({ color = '#ff4f9a', size = 26, className }: { color?: string; size?: number; className?: string }) {
++  const petals = [0, 60, 120, 180, 240, 300]
++  return (
++    <svg viewBox="0 0 24 24" width={size} height={size} className={className} aria-hidden>
++      <defs>
++        <radialGradient id="flower-petal" cx="50%" cy="30%" r="80%">
++          <stop offset="0%" stopColor="#ffd6e8" />
++          <stop offset="60%" stopColor={color} />
++          <stop offset="100%" stopColor="#e63a86" />
++        </radialGradient>
++      </defs>
++      {/* outer, softer petal ring */}
++      {petals.map((r) => (
++        <ellipse
++          key={`outer-${r}`}
++          cx="12"
++          cy="5.4"
++          rx="3.6"
++          ry="5.4"
++          transform={`rotate(${r} 12 12)`}
++          fill={color}
++          opacity="0.35"
++        />
++      ))}
++      {/* inner petal ring */}
++      {petals.map((r) => (
++        <ellipse
++          key={`inner-${r}`}
++          cx="12"
++          cy="6"
++          rx="2.9"
++          ry="4.6"
++          transform={`rotate(${r + 30} 12 12)`}
++          fill="url(#flower-petal)"
++        />
++      ))}
++      {/* centre */}
++      <circle cx="12" cy="12" r="2.7" fill="#f2e6d0" />
++      <circle cx="12" cy="12" r="1.3" fill="#d4af7a" />
++    </svg>
++  )
++}
+diff --git a/src/index.css b/src/index.css
+index 9ee4366..c1af8d4 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -123,6 +123,12 @@ body {
+   }
+ }
+ 
++@keyframes flower-spin {
++  to {
++    transform: rotate(360deg);
++  }
++}
++
+ @keyframes heart-beat {
+   0%,
+   100% {
+@@ -151,6 +157,9 @@ body {
+ .animate-heart-beat {
+   animation: heart-beat 1.8s ease-in-out infinite;
+ }
++.flower-spin {
++  animation: flower-spin 46s linear infinite;
++}
+ 
+ .gradient-shimmer {
+   background-size: 200% auto;
+diff --git a/src/lib/defaults.ts b/src/lib/defaults.ts
+index 41a01a1..d52eb5c 100644
+--- a/src/lib/defaults.ts
++++ b/src/lib/defaults.ts
+@@ -25,12 +25,15 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
+     animationIntensity: 0.7,
+     lineDuration: 2600,
+     transitionDuration: 900,
++    initialDelay: 1100,
+     background: '#08080c',
+   },
+ 
+   heartIntro: {
+     beforeText: 'Before you continue…',
+     promptText: "There's one little thing I need you to do.",
++    lineDuration: 2800,
++    transitionDuration: 1000,
+   },
+ 
+   arrow: {
+@@ -40,6 +43,8 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
+     heartColor: '#ff4f9a',
+     glow: 0.8,
+     trailIntensity: 0.7,
++    flightDuration: 470,
++    pierceDuration: 850,
+     minPullDistance: 70,
+     maxPullDistance: 150,
+     impactEffect: 'both',
+@@ -57,6 +62,8 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
+     correctMessage: "I knew you'd remember. ❤️",
+     unlockedMessage: 'You unlocked something…',
+     teaserLine: "But there's one more thing.",
++    introDuration: 2600,
++    unlockDuration: 2100,
+     maxAttempts: 0,
+     caseSensitive: false,
+     trimWhitespace: true,
+@@ -82,11 +89,15 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
+       "It's a little journey through some of the reasons you mean so much to me.",
+     ],
+     introButton: "LET'S GO ❤️",
++    transitionDuration: 600,
++    introLineDuration: 2300,
++    introFadeDuration: 950,
+   },
+ 
+   story: {
+     title: 'Our Story',
+     subtitle: 'Some moments deserve to be remembered.',
++    animationDuration: 700,
+     entries: [
+       {
+         id: 'placeholder-1',
+@@ -108,12 +119,14 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
+   memories: {
+     title: 'Memories',
+     subtitle: 'Little fragments of us.',
++    animationDuration: 500,
+     items: [],
+   },
+ 
+   things: {
+     title: "Things I Don't Say Enough",
+     subtitle: '',
++    animationDuration: 600,
+     cards: [
+       { id: 'thing-1', message: 'I appreciate you.' },
+       { id: 'thing-2', message: 'I love the way you…' },
+@@ -126,6 +139,7 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
+     intro: "There's something I want you to remember.",
+     message: 'You are so loved. ❤️',
+     buttonText: 'continue ❤️',
++    revealDuration: 900,
+   },
+ 
+   birthdayReveal: {
+@@ -137,11 +151,15 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
+     fireworks: true,
+     accentColor: '#ff4f9a',
+     background: '#08080c',
++    lineDuration: 2400,
++    fadeDuration: 1000,
++    darkDuration: 1000,
+   },
+ 
+   letter: {
+     title: 'A letter for you.',
+     body: '<p>My dearest Jacinta,</p><p>This is where your letter will live. Open the admin dashboard and write it — tell her everything you want her to know.</p><p>With all my love.</p>',
++    revealDuration: 1000,
+   },
+ 
+   finalSurprise: {
+@@ -153,12 +171,15 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
+     instructions: '',
+     dateTime: '',
+     location: '',
++    teaseDuration: 2300,
++    fadeDuration: 900,
+   },
+ 
+   closing: {
+     message: 'Happy Birthday, Jacinta. ❤️',
+     dateLabel: '22.08.2026',
+     withLove: 'With love,',
++    staggerDuration: 1100,
+   },
+ 
+   music: {
+diff --git a/src/sections/ArrowSection.tsx b/src/sections/ArrowSection.tsx
+index 73fc4d9..b65fe99 100644
+--- a/src/sections/ArrowSection.tsx
++++ b/src/sections/ArrowSection.tsx
+@@ -36,6 +36,8 @@ export function ArrowSection({ onDone }: Props) {
+         heartColor={a.heartColor}
+         glow={a.glow}
+         trailIntensity={a.trailIntensity}
++        flightDuration={a.flightDuration}
++        pierceDuration={a.pierceDuration}
+         minPull={a.minPullDistance}
+         maxPull={a.maxPullDistance}
+         soundEffects={a.soundEffects}
+diff --git a/src/sections/BirthdayReveal.tsx b/src/sections/BirthdayReveal.tsx
+index 1c23aa6..28b7319 100644
+--- a/src/sections/BirthdayReveal.tsx
++++ b/src/sections/BirthdayReveal.tsx
+@@ -22,9 +22,9 @@ export function BirthdayReveal({ onDone }: Props) {
+ 
+   useEffect(() => {
+     if (phase !== 'dark') return
+-    const t = setTimeout(() => setPhase('reveal'), 1000)
++    const t = setTimeout(() => setPhase('reveal'), br.darkDuration)
+     return () => clearTimeout(t)
+-  }, [phase])
++  }, [phase, br.darkDuration])
+ 
+   const finish = () => {
+     if (doneRef.current) return
+@@ -40,8 +40,8 @@ export function BirthdayReveal({ onDone }: Props) {
+       {phase === 'pre' && (
+         <LineSequence
+           lines={br.preLines}
+-          holdMs={2400}
+-          fadeMs={1000}
++          holdMs={br.lineDuration}
++          fadeMs={br.fadeDuration}
+           onDone={() => setPhase('dark')}
+           className="max-w-xl font-display text-3xl font-light text-white/90 text-glow-soft sm:text-4xl"
+         />
+diff --git a/src/sections/Closing.tsx b/src/sections/Closing.tsx
+index 61cb59c..757eab1 100644
+--- a/src/sections/Closing.tsx
++++ b/src/sections/Closing.tsx
+@@ -10,6 +10,7 @@ export function Closing() {
+   const eggs = config.easterEggs
+   const [egg, setEgg] = useState<string | null>(null)
+   const tapRef = useRef(0)
++  const stagger = c.staggerDuration
+ 
+   const hearts = useMemo(
+     () =>
+@@ -52,7 +53,7 @@ export function Closing() {
+         <motion.h2
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+-          transition={{ duration: 1.2 }}
++          transition={{ duration: stagger / 1000 }}
+           className="font-display text-4xl font-light leading-snug text-glow sm:text-6xl"
+         >
+           {c.message}
+@@ -61,7 +62,7 @@ export function Closing() {
+         <motion.p
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+-          transition={{ delay: 1.4, duration: 1 }}
++          transition={{ delay: stagger / 1000, duration: 0.9 }}
+           className="mt-8 font-body text-sm uppercase tracking-[0.5em] text-white/50"
+         >
+           {c.dateLabel}
+@@ -70,7 +71,7 @@ export function Closing() {
+         <motion.p
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+-          transition={{ delay: 2.2, duration: 1 }}
++          transition={{ delay: (stagger * 1.8) / 1000, duration: 0.9 }}
+           className="mt-12 font-display text-xl italic text-white/70"
+         >
+           {c.withLove}
+@@ -79,7 +80,7 @@ export function Closing() {
+         <motion.p
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+-          transition={{ delay: 2.8, duration: 1 }}
++          transition={{ delay: (stagger * 2.4) / 1000, duration: 0.9 }}
+           className="mt-1 font-display text-3xl font-light text-rose-soft"
+         >
+           {config.senderName}
+diff --git a/src/sections/Entrance.tsx b/src/sections/Entrance.tsx
+index b6eff60..ad8bc04 100644
+--- a/src/sections/Entrance.tsx
++++ b/src/sections/Entrance.tsx
+@@ -17,16 +17,16 @@ export function Entrance({ onDone }: Props) {
+   const lines = [e.title, ...e.messages, e.closingLine].filter((l) => l && l.trim())
+ 
+   useEffect(() => {
+-    const t1 = setTimeout(() => setShowGreeting(true), 1100)
++    const t1 = setTimeout(() => setShowGreeting(true), e.initialDelay)
+     const t2 = setTimeout(() => {
+       setShowGreeting(false)
+       setShowRest(true)
+-    }, 1100 + e.lineDuration + e.transitionDuration)
++    }, e.initialDelay + e.lineDuration + e.transitionDuration)
+     return () => {
+       clearTimeout(t1)
+       clearTimeout(t2)
+     }
+-  }, [e.lineDuration, e.transitionDuration])
++  }, [e.initialDelay, e.lineDuration, e.transitionDuration])
+ 
+   return (
+     <Stage>
+diff --git a/src/sections/FinalSurprise.tsx b/src/sections/FinalSurprise.tsx
+index 3216b89..666974a 100644
+--- a/src/sections/FinalSurprise.tsx
++++ b/src/sections/FinalSurprise.tsx
+@@ -28,8 +28,8 @@ export function FinalSurprise({ onDone }: Props) {
+           >
+             <LineSequence
+               lines={fs.teaseLines}
+-              holdMs={2300}
+-              fadeMs={900}
++              holdMs={fs.teaseDuration}
++              fadeMs={fs.fadeDuration}
+               onDone={() => setShowButton(true)}
+               className="max-w-lg font-display text-3xl font-light text-white/90 text-glow-soft sm:text-4xl"
+             />
+diff --git a/src/sections/HeartIntro.tsx b/src/sections/HeartIntro.tsx
+index 8e3782c..5d0526d 100644
+--- a/src/sections/HeartIntro.tsx
++++ b/src/sections/HeartIntro.tsx
+@@ -29,8 +29,8 @@ export function HeartIntro({ onDone }: Props) {
+       {started && (
+         <LineSequence
+           lines={[hi.beforeText, hi.promptText]}
+-          holdMs={2800}
+-          fadeMs={1000}
++          holdMs={hi.lineDuration}
++          fadeMs={hi.transitionDuration}
+           onDone={onDone}
+           className="max-w-md font-display text-2xl font-light text-white/90 text-glow-soft sm:text-3xl"
+         />
+diff --git a/src/sections/HeartMoment.tsx b/src/sections/HeartMoment.tsx
+index 20b10a5..a500d1e 100644
+--- a/src/sections/HeartMoment.tsx
++++ b/src/sections/HeartMoment.tsx
+@@ -64,7 +64,7 @@ export function HeartMoment({ onDone }: Props) {
+             <motion.p
+               initial={{ opacity: 0, y: 16 }}
+               animate={{ opacity: 1, y: 0 }}
+-              transition={{ delay: 0.5, duration: 0.9 }}
++              transition={{ delay: 0.5, duration: hm.revealDuration / 1000 }}
+               className="mt-10 max-w-lg font-display text-3xl font-light leading-snug text-glow sm:text-4xl"
+             >
+               {hm.message}
+diff --git a/src/sections/Letter.tsx b/src/sections/Letter.tsx
+index 2aedc76..a7569f0 100644
+--- a/src/sections/Letter.tsx
++++ b/src/sections/Letter.tsx
+@@ -16,7 +16,7 @@ export function Letter({ onDone }: Props) {
+       <motion.div
+         initial={{ opacity: 0, y: 24 }}
+         animate={{ opacity: 1, y: 0 }}
+-        transition={{ duration: 1 }}
++        transition={{ duration: letter.revealDuration / 1000 }}
+         className="flex w-full max-w-2xl flex-col items-center"
+       >
+         <h2 className="mb-10 font-display text-4xl font-light text-glow sm:text-5xl">{letter.title}</h2>
+@@ -24,7 +24,7 @@ export function Letter({ onDone }: Props) {
+         <motion.div
+           initial={{ opacity: 0, y: 20, rotateX: 6 }}
+           animate={{ opacity: 1, y: 0, rotateX: 0 }}
+-          transition={{ delay: 0.3, duration: 1.1 }}
++          transition={{ delay: letter.revealDuration / 3000, duration: letter.revealDuration / 1000 }}
+           className="glass letter-body w-full rounded-3xl px-7 py-9 text-left sm:px-12 sm:py-12"
+           dangerouslySetInnerHTML={{ __html: sanitizeHtml(letter.body) }}
+         />
+diff --git a/src/sections/Memories.tsx b/src/sections/Memories.tsx
+index 4fa3505..1f5dacd 100644
+--- a/src/sections/Memories.tsx
++++ b/src/sections/Memories.tsx
+@@ -37,7 +37,7 @@ export function Memories({ onDone }: Props) {
+               initial={{ opacity: 0, scale: 0.96 }}
+               whileInView={{ opacity: 1, scale: 1 }}
+               viewport={{ once: true, amount: 0.15 }}
+-              transition={{ duration: 0.5, delay: (i % 6) * 0.06 }}
++              transition={{ duration: memories.animationDuration / 1000, delay: (i % 6) * 0.06 }}
+               onClick={() => setLightbox(i)}
+               className="group relative aspect-square overflow-hidden rounded-2xl border border-white/5"
+               aria-label={m.caption || m.alt || 'Open memory'}
+diff --git a/src/sections/Ready.tsx b/src/sections/Ready.tsx
+index 051b88b..6b67319 100644
+--- a/src/sections/Ready.tsx
++++ b/src/sections/Ready.tsx
+@@ -31,7 +31,7 @@ export function Ready({ onDone }: Props) {
+             initial={{ opacity: 0, y: 16 }}
+             animate={{ opacity: 1, y: 0 }}
+             exit={{ opacity: 0, y: -16 }}
+-            transition={{ duration: 0.6 }}
++            transition={{ duration: r.transitionDuration / 1000 }}
+             className="flex flex-col items-center"
+           >
+             <h2 className="font-display text-4xl font-light text-glow sm:text-5xl">{r.readyText}</h2>
+@@ -45,7 +45,7 @@ export function Ready({ onDone }: Props) {
+             initial={{ opacity: 0, y: 16 }}
+             animate={{ opacity: 1, y: 0 }}
+             exit={{ opacity: 0, y: -16 }}
+-            transition={{ duration: 0.6 }}
++            transition={{ duration: r.transitionDuration / 1000 }}
+             className="flex flex-col items-center"
+           >
+             <h2 className="font-display text-4xl font-light text-glow sm:text-5xl">{r.sureText}</h2>
+diff --git a/src/sections/SecretLock.tsx b/src/sections/SecretLock.tsx
+index e462fc5..dd96a5d 100644
+--- a/src/sections/SecretLock.tsx
++++ b/src/sections/SecretLock.tsx
+@@ -35,9 +35,9 @@ export function SecretLock({ onDone }: Props) {
+         doneRef.current = true
+         onDone()
+       }
+-    }, 2100)
++    }, lock.unlockDuration)
+     return () => clearTimeout(t)
+-  }, [stage, onDone])
++  }, [stage, onDone, lock.unlockDuration])
+ 
+   const submit = async (e: React.FormEvent) => {
+     e.preventDefault()
+@@ -78,8 +78,8 @@ export function SecretLock({ onDone }: Props) {
+         </motion.div>
+         <LineSequence
+           lines={[lock.unlockedMessage, lock.teaserLine]}
+-          holdMs={2600}
+-          fadeMs={900}
++          holdMs={lock.introDuration}
++          fadeMs={Math.min(1000, Math.round(lock.introDuration / 3))}
+           onDone={() => setStage('form')}
+           className="max-w-md font-display text-2xl font-light text-white/90 text-glow-soft sm:text-3xl"
+         />
+diff --git a/src/sections/Story.tsx b/src/sections/Story.tsx
+index a0e930e..184c607 100644
+--- a/src/sections/Story.tsx
++++ b/src/sections/Story.tsx
+@@ -37,7 +37,7 @@ export function Story({ onDone }: Props) {
+                 initial={{ opacity: 0, y: 26 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 viewport={{ once: true, amount: 0.25 }}
+-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
++                transition={{ duration: story.animationDuration / 1000, ease: [0.22, 1, 0.36, 1] }}
+                 className="relative pl-10"
+               >
+                 <span
+diff --git a/src/sections/StoryIntro.tsx b/src/sections/StoryIntro.tsx
+index 0d7b2b6..7b745c9 100644
+--- a/src/sections/StoryIntro.tsx
++++ b/src/sections/StoryIntro.tsx
+@@ -17,8 +17,8 @@ export function StoryIntro({ onDone }: Props) {
+     <Stage>
+       <LineSequence
+         lines={r.introLines}
+-        holdMs={2300}
+-        fadeMs={950}
++        holdMs={r.introLineDuration}
++        fadeMs={r.introFadeDuration}
+         onDone={() => setShowButton(true)}
+         className="max-w-2xl font-display text-2xl font-light text-white/90 text-glow-soft sm:text-3xl"
+       />
+diff --git a/src/sections/Things.tsx b/src/sections/Things.tsx
+index da2eb61..ff150b3 100644
+--- a/src/sections/Things.tsx
++++ b/src/sections/Things.tsx
+@@ -28,7 +28,7 @@ export function Things({ onDone }: Props) {
+             initial={{ opacity: 0, y: 24 }}
+             whileInView={{ opacity: 1, y: 0 }}
+             viewport={{ once: true, amount: 0.2 }}
+-            transition={{ duration: 0.6, delay: (i % 2) * 0.1 }}
++            transition={{ duration: things.animationDuration / 1000, delay: (i % 2) * 0.1 }}
+             className="glass rounded-3xl p-7 text-left"
+           >
+             {card.title && (
+diff --git a/src/types/config.ts b/src/types/config.ts
+index a93201e..621adaf 100644
+--- a/src/types/config.ts
++++ b/src/types/config.ts
+@@ -64,12 +64,18 @@ export interface EntranceConfig {
+   lineDuration: number
+   /** ms of cross-fade between lines. */
+   transitionDuration: number
++  /** ms before the opening name appears. */
++  initialDelay: number
+   background: string
+ }
+ 
+ export interface HeartIntroConfig {
+   beforeText: string
+   promptText: string
++  /** ms each intro line stays visible. */
++  lineDuration: number
++  /** ms of cross-fade between the intro lines. */
++  transitionDuration: number
+ }
+ 
+ export interface ArrowConfig {
+@@ -81,6 +87,10 @@ export interface ArrowConfig {
+   glow: number
+   /** 0..1 */
+   trailIntensity: number
++  /** ms the arrow takes to fly into the heart. */
++  flightDuration: number
++  /** ms the arrow sits in the heart before it opens. */
++  pierceDuration: number
+   /** Minimum pull distance (svg units) required to fire. */
+   minPullDistance: number
+   /** Maximum pull distance (svg units). */
+@@ -102,6 +112,10 @@ export interface SecretLockConfig {
+   unlockedMessage: string
+   /** Second intro line, e.g. "But there's one more thing." */
+   teaserLine: string
++  /** ms the "you unlocked something" lines stay visible. */
++  introDuration: number
++  /** ms the unlock celebration shows before continuing. */
++  unlockDuration: number
+   /** 0 = unlimited. */
+   maxAttempts: number
+   caseSensitive: boolean
+@@ -119,30 +133,44 @@ export interface ReadyConfig {
+   waitResponses: string[]
+   introLines: string[]
+   introButton: string
++  /** ms cross-fade between the ready / sure screens. */
++  transitionDuration: number
++  /** ms each story-introduction line stays visible. */
++  introLineDuration: number
++  /** ms cross-fade between story-introduction lines. */
++  introFadeDuration: number
+ }
+ 
+ export interface StoryConfig {
+   title: string
+   subtitle: string
+   entries: StoryEntry[]
++  /** ms the timeline entries animate in. */
++  animationDuration: number
+ }
+ 
+ export interface MemoriesConfig {
+   title: string
+   subtitle: string
+   items: MediaItem[]
++  /** ms each gallery item animates in. */
++  animationDuration: number
+ }
+ 
+ export interface ThingsConfig {
+   title: string
+   subtitle: string
+   cards: MessageCard[]
++  /** ms each card animates in. */
++  animationDuration: number
+ }
+ 
+ export interface HeartMomentConfig {
+   intro: string
+   message: string
+   buttonText: string
++  /** ms the revealed message takes to fade in. */
++  revealDuration: number
+ }
+ 
+ export interface BirthdayRevealConfig {
+@@ -155,12 +183,20 @@ export interface BirthdayRevealConfig {
+   fireworks: boolean
+   accentColor: string
+   background: string
++  /** ms the reveal intro lines stay visible. */
++  lineDuration: number
++  /** ms cross-fade between the reveal intro lines. */
++  fadeDuration: number
++  /** ms of darkness before the date appears. */
++  darkDuration: number
+ }
+ 
+ export interface LetterConfig {
+   title: string
+   /** Sanitised rich text (HTML). */
+   body: string
++  /** ms the letter takes to animate in. */
++  revealDuration: number
+ }
+ 
+ export interface FinalSurpriseConfig {
+@@ -172,12 +208,18 @@ export interface FinalSurpriseConfig {
+   instructions?: string
+   dateTime?: string
+   location?: string
++  /** ms each tease line stays visible. */
++  teaseDuration: number
++  /** ms cross-fade between tease lines. */
++  fadeDuration: number
+ }
+ 
+ export interface ClosingConfig {
+   message: string
+   dateLabel: string
+   withLove: string
++  /** ms between each closing element appearing. */
++  staggerDuration: number
+ }
+ 
+ export interface MusicConfig {
+--- a/src/components/OpeningHeart.tsx
++++ b/src/components/OpeningHeart.tsx
+@@ -0,0 +1,117 @@
++import { useId } from 'react'
++import { motion } from 'framer-motion'
++
++interface OpeningHeartProps {
++  color: string
++  size: number
++  /** Swing the two halves open like a locket. */
++  open: boolean
++}
++
++/**
++ * The heart that opens after the arrow pierces it. It renders the full heart
++ * twice — each half clipped — and swings the halves outward from the bottom
++ * point to reveal what's behind it.
++ */
++export function OpeningHeart({ color, size, open }: OpeningHeartProps) {
++  const id = useId().replace(/[^a-zA-Z0-9_-]/g, '')
++  const gradientId = `opening-heart-${id}`
++
++  const heart = (
++    <svg
++      viewBox="0 0 24 24"
++      width={size}
++      height={size}
++      aria-hidden
++      style={{ filter: `drop-shadow(0 0 ${10 + size / 12}px ${color})` }}
++    >
++      <defs>
++        <radialGradient id={gradientId} cx="50%" cy="36%" r="75%">
++          <stop offset="0%" stopColor="#ffd6e8" />
++          <stop offset="45%" stopColor={color} />
++          <stop offset="100%" stopColor="#e63a86" />
++        </radialGradient>
++      </defs>
++      <path
++        fill={`url(#${gradientId})`}
++        d="M12 21.35s-7.8-4.78-7.8-10.68c0-3.04 2.36-5.17 4.77-5.17 1.75 0 2.73.99 3.03 1.98.3-.99 1.28-1.98 3.03-1.98 2.41 0 4.77 2.13 4.77 5.17C19.8 16.57 12 21.35 12 21.35z"
++      />
++    </svg>
++  )
++
++  const halfStyle: React.CSSProperties = {
++    clipPath: 'inset(0 50% 0 0)',
++    WebkitClipPath: 'inset(0 50% 0 0)',
++    transformOrigin: '50% 100%',
++  }
++  const halfStyleRight: React.CSSProperties = {
++    clipPath: 'inset(0 0 0 50%)',
++    WebkitClipPath: 'inset(0 0 0 50%)',
++    transformOrigin: '50% 100%',
++  }
++
++  return (
++    <div className="relative" style={{ width: size, height: size }}>
++      {/* light that blooms from inside as it opens */}
++      <motion.div
++        className="absolute left-1/2 top-1/2 rounded-full"
++        style={{
++          width: size,
++          height: size,
++          marginLeft: -size / 2,
++          marginTop: -size / 2,
++          background: `radial-gradient(circle, ${color}99 0%, transparent 68%)`,
++        }}
++        initial={false}
++        animate={open ? { opacity: 1, scale: 2.1 } : { opacity: 0, scale: 0.5 }}
++        transition={{ duration: 0.9, ease: 'easeOut' }}
++      />
++
++      {/* left half */}
++      <motion.div
++        className="absolute inset-0"
++        style={halfStyle}
++        initial={false}
++        animate={
++          open
++            ? { x: -size * 0.27, y: size * 0.08, rotate: -17, opacity: 0.85 }
++            : { x: 0, y: 0, rotate: 0, opacity: 1 }
++        }
++        transition={open ? { type: 'spring', stiffness: 130, damping: 14 } : { duration: 0.3 }}
++      >
++        {heart}
++      </motion.div>
++
++      {/* right half */}
++      <motion.div
++        className="absolute inset-0"
++        style={halfStyleRight}
++        initial={false}
++        animate={
++          open
++            ? { x: size * 0.27, y: size * 0.08, rotate: 17, opacity: 0.85 }
++            : { x: 0, y: 0, rotate: 0, opacity: 1 }
++        }
++        transition={open ? { type: 'spring', stiffness: 130, damping: 14 } : { duration: 0.3 }}
++      >
++        {heart}
++      </motion.div>
++
++      {/* crack of light between the halves */}
++      <motion.div
++        className="absolute left-1/2 top-1/2 rounded-full"
++        style={{
++          width: 3,
++          height: size * 0.85,
++          marginLeft: -1.5,
++          marginTop: -size * 0.45,
++          background: `linear-gradient(${color}, #ffffff)`,
++          filter: 'blur(1.5px)',
++        }}
++        initial={false}
++        animate={open ? { opacity: 0.95, scaleY: 1 } : { opacity: 0, scaleY: 0.15 }}
++        transition={{ duration: 0.6 }}
++      />
++    </div>
++  )
++}

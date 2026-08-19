@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { ExperienceProvider, type ExperienceMeta } from '@/context/ExperienceContext'
 import { AmbientParticles } from '@/components/AmbientParticles'
 import { MusicPlayer } from '@/components/MusicPlayer'
+import { FlowerButton } from '@/components/FlowerButton'
+import { StageBackdrop } from '@/components/StageBackdrop'
 import { clamp, isBirthdayNow } from '@/lib/utils'
-import type { BirthdayConfig } from '@/types/config'
+import { STAGE_LABELS } from '@/lib/stages'
+import type { BirthdayConfig, StageId } from '@/types/config'
 import { Countdown } from '@/sections/Countdown'
 import { Entrance } from '@/sections/Entrance'
 import { HeartIntro } from '@/sections/HeartIntro'
@@ -21,40 +24,8 @@ import { Letter } from '@/sections/Letter'
 import { FinalSurprise } from '@/sections/FinalSurprise'
 import { Closing } from '@/sections/Closing'
 
-export type StageId =
-  | 'countdown'
-  | 'entrance'
-  | 'heart'
-  | 'arrow'
-  | 'lock'
-  | 'ready'
-  | 'intro'
-  | 'story'
-  | 'memories'
-  | 'things'
-  | 'heartmoment'
-  | 'reveal'
-  | 'letter'
-  | 'surprise'
-  | 'closing'
-
-export const STAGE_LABELS: Array<{ id: StageId; label: string }> = [
-  { id: 'countdown', label: 'Countdown' },
-  { id: 'entrance', label: 'Entrance' },
-  { id: 'heart', label: 'Heart' },
-  { id: 'arrow', label: 'Arrow' },
-  { id: 'lock', label: 'Secret Lock' },
-  { id: 'ready', label: 'Ready' },
-  { id: 'intro', label: 'Story Intro' },
-  { id: 'story', label: 'Our Story' },
-  { id: 'memories', label: 'Memories' },
-  { id: 'things', label: "Things I Don't Say" },
-  { id: 'heartmoment', label: 'Heart Moment' },
-  { id: 'reveal', label: 'Birthday Reveal' },
-  { id: 'letter', label: 'Letter' },
-  { id: 'surprise', label: 'Final Surprise' },
-  { id: 'closing', label: 'Closing' },
-]
+export type { StageId }
+export { STAGE_LABELS }
 
 function buildStages(config: BirthdayConfig): StageId[] {
   const stages: StageId[] = []
@@ -129,6 +100,19 @@ export function Experience({
     })
   }, [stages, preview])
 
+  const restart = useCallback(() => {
+    if (!preview) {
+      try {
+        window.sessionStorage.removeItem('jaci_stage')
+        window.sessionStorage.removeItem('jaci_unlocked')
+      } catch {
+        // ignore
+      }
+    }
+    setIdx(0)
+    scrollRef.current?.scrollTo({ top: 0 })
+  }, [preview])
+
   useEffect(() => {
     if (preview) return
     try {
@@ -151,6 +135,8 @@ export function Experience({
   }
   ;(rootStyle as Record<string, string>)['--font-heading'] = app.fontHeading
   ;(rootStyle as Record<string, string>)['--font-body'] = app.fontBody
+
+  const stageBg = config.backgrounds?.[stageId]
 
   const renderStage = () => {
     switch (stageId) {
@@ -194,10 +180,24 @@ export function Experience({
         className="no-scrollbar relative h-[100dvh] w-full overflow-y-auto overflow-x-hidden"
         style={rootStyle}
       >
+        {/* Per-stage background (colour / gradient / photo + effects) */}
+        <AnimatePresence mode="sync">
+          <motion.div
+            key={stageId}
+            className="pointer-events-none fixed inset-0 z-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.1, ease: 'easeInOut' }}
+          >
+            <StageBackdrop bg={stageBg} cloudName={meta.cloudName} />
+          </motion.div>
+        </AnimatePresence>
+
         <AmbientParticles
           density={config.entrance.particleIntensity}
           color={accent}
-          className="pointer-events-none fixed inset-0 z-0"
+          className="pointer-events-none fixed inset-0 z-[1]"
         />
 
         <div className="relative z-10">
@@ -205,6 +205,11 @@ export function Experience({
         </div>
 
         <MusicPlayer />
+
+        <FlowerButton onRestart={restart} hero={stageId === 'closing'} position="top" />
+        {stageId === 'closing' && (
+          <FlowerButton onRestart={restart} hero position="bottom" />
+        )}
 
         {preview && (
           <div className="glass fixed bottom-4 left-4 z-[70] flex max-w-[80vw] items-center gap-2 rounded-2xl p-2">

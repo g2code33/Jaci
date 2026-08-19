@@ -35,9 +35,9 @@ export function SecretLock({ onDone }: Props) {
         doneRef.current = true
         onDone()
       }
-    }, 2100)
+    }, lock.unlockDuration)
     return () => clearTimeout(t)
-  }, [stage, onDone])
+  }, [stage, onDone, lock.unlockDuration])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,8 +78,8 @@ export function SecretLock({ onDone }: Props) {
         </motion.div>
         <LineSequence
           lines={[lock.unlockedMessage, lock.teaserLine]}
-          holdMs={2600}
-          fadeMs={900}
+          holdMs={lock.introDuration}
+          fadeMs={Math.min(1000, Math.round(lock.introDuration / 3))}
           onDone={() => setStage('form')}
           className="max-w-md font-display text-2xl font-light text-white/90 text-glow-soft sm:text-3xl"
         />

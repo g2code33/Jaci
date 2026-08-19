@@ -1,33 +1,33 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "jaci-birthday",
-  "main": "server/worker.ts",
-  "compatibility_date": "2026-08-18",
-
-  // Static site (the built Vite app) is served by Workers Assets.
-  // API requests are routed to the Worker first; unmatched client-side
-  // routes (e.g. /admin) fall back to index.html (SPA).
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
-  },
-
-  // Cloudflare D1 database (draft/published config, memories, media metadata).
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "jaci-birthday",
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
-      "migrations_dir": "migrations"
-    }
-  ],
-
-  // Non-sensitive defaults. Secrets go in the dashboard or via
-  // `wrangler secret put`: ADMIN_PASSWORD, AUTH_SECRET,
-  // CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.
-  "vars": {
-    "CLOUDINARY_FOLDER": "jacinta-birthday"
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "jaci-birthday",
+	"main": "server/worker.ts",
+	"compatibility_date": "2026-08-18",
+	// Static site (the built Vite app) is served by Workers Assets.
+	// API requests are routed to the Worker first; unmatched client-side
+	// routes (e.g. /admin) fall back to index.html (SPA).
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/api/*"
+		]
+	},
+	// Cloudflare D1 database (draft/published config, memories, media metadata).
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "jaci-birthday",
+			"database_id": "611068d5-3631-4051-b2bd-b9ef57766d7f",
+			"migrations_dir": "migrations"
+		}
+		
+	],
+	// Non-sensitive defaults. Secrets go in the dashboard or via
+	// `wrangler secret put`: ADMIN_PASSWORD, AUTH_SECRET,
+	// CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET.
+	"vars": {
+		"CLOUDINARY_FOLDER": "jacinta-birthday"
+	}
 }

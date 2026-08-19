@@ -5,6 +5,7 @@ import { Experience } from '@/components/Experience'
 import {
   AppearanceEditor,
   ArrowEditor,
+  BackgroundsEditor,
   BirthdayRevealEditor,
   EntranceEditor,
   FinalSurpriseEditor,
@@ -38,6 +39,7 @@ const NAV = [
   { id: 'music', label: 'Music' },
   { id: 'media', label: 'Cloudinary Media' },
   { id: 'appearance', label: 'Appearance' },
+  { id: 'backgrounds', label: 'Stage Backgrounds' },
   { id: 'settings', label: 'Settings' },
 ]
 
@@ -45,6 +47,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
   const { draft, meta, dirty, saving, publishing, saveDraft, publish, revert, reset, cloudinary } = useAdmin()
   const [section, setSection] = useState('overview')
   const [preview, setPreview] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   const flash = (msg: string) => {
@@ -84,6 +87,8 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
         return <MediaLibrary />
       case 'appearance':
         return <AppearanceEditor />
+      case 'backgrounds':
+        return <BackgroundsEditor />
       case 'settings':
         return <SettingsEditor />
       default:
@@ -94,34 +99,55 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
   return (
     <div className="min-h-[100dvh] bg-night-900 text-white">
       {/* Top bar */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-night-900/90 backdrop-blur-md">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-night-900/95 backdrop-blur-md">
+        <div className="flex flex-col gap-2.5 px-3 pt-3 lg:flex-row lg:items-center lg:justify-between lg:px-4">
+          {/* Title + status (hamburger left, mobile logout icon right) */}
           <div className="flex items-center gap-2">
-            <span aria-hidden className="text-rose">❤</span>
-            <h1 className="font-display text-lg font-light">Birthday Admin</h1>
-            <span
-              className={cn(
-                'rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider',
-                dirty ? 'bg-amber-400/20 text-amber-200' : 'bg-emerald-400/20 text-emerald-200',
-              )}
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-white/70 transition hover:bg-white/10 lg:hidden"
             >
-              {dirty ? 'Unsaved changes' : 'Saved'}
-            </span>
+              ☰
+            </button>
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <span aria-hidden className="text-rose">❤</span>
+              <h1 className="truncate font-display text-lg font-light">Birthday Admin</h1>
+              <span
+                className={cn(
+                  'shrink-0 rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wider',
+                  dirty ? 'bg-amber-400/20 text-amber-200' : 'bg-emerald-400/20 text-emerald-200',
+                )}
+              >
+                <span className="lg:hidden">{dirty ? 'Unsaved' : 'Saved'}</span>
+                <span className="hidden lg:inline">{dirty ? 'Unsaved changes' : 'Saved'}</span>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              aria-label="Log out"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-white/60 transition hover:bg-white/10 lg:hidden"
+            >
+              ⏻
+            </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className="btn-outline !px-4 !py-2 text-xs" onClick={() => setPreview(true)}>
+          {/* Actions — stacked grid on mobile, single row on desktop */}
+          <div className="grid grid-cols-2 gap-2 lg:flex lg:items-center">
+            <button type="button" className="btn-outline col-span-2 !px-4 !py-2.5 text-xs lg:col-span-1" onClick={() => setPreview(true)}>
               Preview as Jacinta
             </button>
-            <button type="button" className="btn-outline !px-4 !py-2 text-xs" onClick={onLogout}>
+            <button type="button" className="btn-outline hidden !px-4 !py-2 text-xs lg:inline-flex" onClick={onLogout}>
               Log out
             </button>
-            <button type="button" className="btn-solid !px-4 !py-2 text-xs" disabled={saving || !dirty} onClick={() => saveDraft().then(() => flash('Draft saved.'))}>
+            <button type="button" className="btn-solid !px-4 !py-2.5 text-xs" disabled={saving || !dirty} onClick={() => saveDraft().then(() => flash('Draft saved.'))}>
               {saving ? 'Saving…' : 'Save Draft'}
             </button>
             <button
               type="button"
-              className="btn-solid !px-4 !py-2 text-xs"
+              className="btn-solid !px-4 !py-2.5 text-xs"
               disabled={publishing}
               style={{ background: 'linear-gradient(135deg,#d4af7a,#b98a4e)' }}
               onClick={() => publish().then(() => flash('Published — the live experience is updated.'))}
@@ -131,10 +157,10 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-4 pb-2">
+        <div className="flex items-center gap-2 px-3 pb-2.5 lg:px-4">
           <button
             type="button"
-            className="rounded-lg bg-white/5 px-2.5 py-1 text-[11px] text-white/50 transition hover:bg-white/10"
+            className="rounded-lg bg-white/5 px-2.5 py-1.5 text-[11px] text-white/50 transition hover:bg-white/10"
             onClick={() => {
               if (window.confirm('Discard draft changes and revert to the published version?')) revert().then(() => flash('Reverted to published.'))
             }}
@@ -143,7 +169,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
           </button>
           <button
             type="button"
-            className="rounded-lg bg-white/5 px-2.5 py-1 text-[11px] text-white/50 transition hover:bg-white/10"
+            className="rounded-lg bg-white/5 px-2.5 py-1.5 text-[11px] text-white/50 transition hover:bg-white/10"
             onClick={() => {
               if (window.confirm('Reset everything to defaults? This cannot be undone.')) reset().then(() => flash('Reset to defaults.'))
             }}
@@ -173,27 +199,59 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
           </nav>
         </aside>
 
-        {/* Mobile nav */}
-        <div className="no-scrollbar flex gap-1 overflow-x-auto px-4 py-3 lg:hidden">
-          {NAV.map((n) => (
-            <button
-              key={n.id}
-              type="button"
-              onClick={() => setSection(n.id)}
-              className={cn(
-                'shrink-0 rounded-full px-3 py-1.5 text-xs transition',
-                section === n.id ? 'bg-rose text-white' : 'bg-white/5 text-white/60',
-              )}
-            >
-              {n.label}
-            </button>
-          ))}
-        </div>
-
-        <main className="min-w-0 flex-1 p-4 sm:p-8">
+        <main className="min-w-0 flex-1 p-4 pb-24 sm:p-8">
           <div className="mx-auto max-w-4xl">{renderSection()}</div>
         </main>
       </div>
+
+      {/* Mobile full-screen menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex flex-col bg-night-900 lg:hidden"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span aria-hidden className="text-rose">❤</span>
+                <span className="font-display text-lg font-light">Birthday Admin</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Close menu"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-white/70 transition hover:bg-white/10"
+              >
+                ✕
+              </button>
+            </div>
+            <nav className="no-scrollbar flex-1 overflow-y-auto p-3">
+              <div className="flex flex-col gap-1">
+                {NAV.map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => {
+                      setSection(n.id)
+                      setMenuOpen(false)
+                    }}
+                    className={cn(
+                      'flex items-center justify-between rounded-xl px-4 py-3.5 text-left text-sm transition',
+                      section === n.id ? 'bg-rose/20 text-rose-soft' : 'text-white/70 hover:bg-white/5',
+                    )}
+                  >
+                    <span>{n.label}</span>
+                    <span aria-hidden className="text-white/30">›</span>
+                  </button>
+                ))}
+              </div>
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Preview */}
       <AnimatePresence>

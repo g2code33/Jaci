@@ -8,7 +8,7 @@ import { buildSignedUpload, type CloudinarySettings } from './cloudinary'
 import { safeEqualHex } from './crypto'
 import type { StorageAdapter } from './storage'
 import { DEFAULT_CONFIG } from '../src/lib/defaults'
-import type { BirthdayConfig, MediaItem } from '../src/types/config'
+import type { BackgroundsConfig, BirthdayConfig, MediaItem, MusicTrack, StageId } from '../src/types/config'
 
 export interface LocalFileStore {
   save(name: string, data: Uint8Array): Promise<{ id: string; url: string }>
@@ -83,7 +83,44 @@ function mergeConfig(incoming: unknown): BirthdayConfig {
       ;(base as unknown as Record<string, unknown>)[key] = value
     }
   }
-  return base
+  base.backgrounds = normalizeBackgrounds((base as unknown as Record<string, unknown>).backgrounds)
+  return migrateMusic(base)
+}
+
+/** Deep-merge each stage background over defaults so older saves gain new fields. */
+function normalizeBackgrounds(value: unknown): BackgroundsConfig {
+  const base = DEFAULT_CONFIG.backgrounds
+  const incoming = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>
+  const out = {} as BackgroundsConfig
+  for (const key of Object.keys(base) as StageId[]) {
+    const stage = incoming[key]
+    out[key] = {
+      ...base[key],
+      ...(stage && typeof stage === 'object' ? (stage as Record<string, unknown>) : {}),
+    } as BackgroundsConfig[StageId]
+  }
+  return out
+}
+
+/**
+ * Older configs stored a single `music.url` / `music.title`. Convert those
+ * into the new playlist shape so nothing the admin saved is lost.
+ */
+function migrateMusic(config: BirthdayConfig): BirthdayConfig {
+  const music = config.music as unknown as {
+    url?: string
+    title?: string
+    autoplay?: boolean
+    tracks?: MusicTrack[]
+  }
+  if (music.url && (!Array.isArray(music.tracks) || music.tracks.length === 0)) {
+    music.tracks = [{ id: 'track-legacy', title: music.title || 'Music', url: music.url }]
+  }
+  if (!Array.isArray(music.tracks)) music.tracks = []
+  delete music.url
+  delete music.title
+  delete music.autoplay
+  return config
 }
 
 export function createApp(deps: AppDeps): Hono {
@@ -111,10 +148,13 @@ export function createApp(deps: AppDeps): Hono {
 
   app.get('/api/config', async (c) => {
     const store = await deps.storage.read()
+    // Merge over defaults so configs saved by older versions still get
+    // any newly-added fields filled in.
+    const config = mergeConfig(store.published)
     return c.json({
-      config: store.published,
+      config,
       meta: {
-        cloudName: store.published.media.cloudName || deps.cloudinary?.cloudName || '',
+        cloudName: config.media.cloudName || deps.cloudinary?.cloudName || '',
         publishedAt: store.meta.publishedAt || null,
       },
     })
@@ -206,8 +246,8 @@ export function createApp(deps: AppDeps): Hono {
   app.get('/api/admin/config', async (c) => {
     const store = await deps.storage.read()
     return c.json({
-      draft: store.draft,
-      published: store.published,
+      draft: mergeConfig(store.draft),
+      published: mergeConfig(store.published),
       meta: store.meta,
       cloudinary: deps.cloudinary
         ? { enabled: true, cloudName: deps.cloudinary.cloudName, folder: deps.cloudinary.folder }
