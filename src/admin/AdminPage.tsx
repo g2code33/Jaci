@@ -74,6 +74,17 @@ export default function AdminPage() {
     }
   }, [draft])
 
+  const persist = useCallback(async (config: BirthdayConfig) => {
+    setSaving(true)
+    try {
+      const res = await api.saveDraft(config)
+      setDraft(res.draft)
+      setDirty(false)
+    } finally {
+      setSaving(false)
+    }
+  }, [])
+
   const publish = useCallback(async () => {
     setPublishing(true)
     try {
@@ -124,6 +135,7 @@ export default function AdminPage() {
     cloudinary: data.cloudinary,
     localUpload: data.localUpload,
     update,
+    persist,
     saveDraft,
     publish,
     revert,

@@ -35,27 +35,28 @@ export function setIn<T>(obj: T, path: Path, value: unknown): T {
   return root as T
 }
 
-/** Move an item within an array at `path` from `from` to `to`. */
-export function moveIn<T>(obj: T, path: Path, from: number, to: number): T {
+/** Move an item within an array at `path` from `from` to `to`. Returns the new array. */
+export function moveIn<T>(obj: T, path: Path, from: number, to: number): unknown[] {
   const arr = getIn(obj, path) as unknown[]
-  if (!Array.isArray(arr)) return obj
+  if (!Array.isArray(arr)) return []
   const next = [...arr]
   const [item] = next.splice(from, 1)
-  if (item === undefined) return obj
+  if (item === undefined) return next
   next.splice(to, 0, item)
-  return setIn(obj, path, next)
+  return next
 }
 
-export function removeAt<T>(obj: T, path: Path, index: number): T {
+/** Remove an item from an array at `path`. Returns the new array. */
+export function removeAt<T>(obj: T, path: Path, index: number): unknown[] {
   const arr = getIn(obj, path) as unknown[]
-  if (!Array.isArray(arr)) return obj
-  const next = arr.filter((_, i) => i !== index)
-  return setIn(obj, path, next)
+  if (!Array.isArray(arr)) return []
+  return arr.filter((_, i) => i !== index)
 }
 
-export function insertAt<T>(obj: T, path: Path, index: number, item: unknown): T {
+/** Insert an item into an array at `path`. Returns the new array. */
+export function insertAt<T>(obj: T, path: Path, index: number, item: unknown): unknown[] {
   const arr = (getIn(obj, path) as unknown[]) || []
   const next = [...arr]
   next.splice(index, 0, item)
-  return setIn(obj, path, next)
+  return next
 }

@@ -94,18 +94,22 @@ export function FlowerButton({ onRestart, hero = false, position = 'top' }: Flow
   ]
 
   const isBottom = position === 'bottom'
+  // Label placement: only on the end page (hero) does the top flower put its
+  // label above the flower; the bottom flower keeps its label below. On every
+  // other page the small top flower keeps its label below the flower.
+  const labelAbove = !isBottom && hero
 
   const label = (
     <AnimatePresence mode="wait" initial={false}>
       {confirming ? (
         <motion.span
           key="confirm"
-          initial={{ opacity: 0, y: isBottom ? 6 : -6 }}
+          initial={{ opacity: 0, y: labelAbove ? -6 : 6 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: isBottom ? 6 : -6 }}
+          exit={{ opacity: 0, y: labelAbove ? -6 : 6 }}
           className={cn(
             'glass whitespace-nowrap rounded-full px-3 py-1 font-body text-[11px] tracking-wide text-white/85',
-            isBottom ? 'mb-1.5' : 'mt-1',
+            labelAbove ? 'mb-1.5' : 'mt-1',
           )}
         >
           Tap again to confirm
@@ -113,12 +117,12 @@ export function FlowerButton({ onRestart, hero = false, position = 'top' }: Flow
       ) : hero ? (
         <motion.span
           key="hero-label"
-          initial={{ opacity: 0, y: isBottom ? 8 : -8 }}
+          initial={{ opacity: 0, y: labelAbove ? -8 : 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           className={cn(
             'whitespace-nowrap font-display text-lg italic tracking-[0.14em] text-glow',
-            isBottom ? 'mb-2' : 'mt-2',
+            labelAbove ? 'mb-2' : 'mt-2',
           )}
         >
           Restart Afresh ❤️
@@ -131,7 +135,7 @@ export function FlowerButton({ onRestart, hero = false, position = 'top' }: Flow
           exit={{ opacity: 0 }}
           className={cn(
             'whitespace-nowrap font-display text-[13px] italic tracking-[0.16em] text-white/60 text-glow-soft',
-            isBottom ? 'mb-1' : 'mt-1',
+            labelAbove ? 'mb-1' : 'mt-1',
           )}
         >
           Restart Afresh
@@ -153,7 +157,7 @@ export function FlowerButton({ onRestart, hero = false, position = 'top' }: Flow
           isBottom ? 'pb-safe' : 'pt-safe',
         )}
       >
-        {isBottom && label}
+        {labelAbove && label}
 
         <button
           type="button"
@@ -221,7 +225,7 @@ export function FlowerButton({ onRestart, hero = false, position = 'top' }: Flow
           />
         </button>
 
-        {!isBottom && label}
+        {!labelAbove && label}
       </div>
     </div>
   )

@@ -51,7 +51,7 @@ export function OpeningHeart({ color, size, open }: OpeningHeartProps) {
   }
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="pointer-events-none relative" style={{ width: size, height: size }}>
       {/* light that blooms from inside as it opens */}
       <motion.div
         className="absolute left-1/2 top-1/2 rounded-full"

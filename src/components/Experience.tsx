@@ -6,6 +6,8 @@ import { MusicPlayer } from '@/components/MusicPlayer'
 import { FlowerButton } from '@/components/FlowerButton'
 import { StageBackdrop } from '@/components/StageBackdrop'
 import { clamp, isBirthdayNow } from '@/lib/utils'
+import { hapticTap } from '@/lib/haptics'
+import { RecordingGate } from '@/components/RecordingGate'
 import { STAGE_LABELS } from '@/lib/stages'
 import type { BirthdayConfig, StageId } from '@/types/config'
 import { Countdown } from '@/sections/Countdown'
@@ -86,6 +88,8 @@ export function Experience({
   })
 
   const stageId: StageId = stages[idx] ?? 'closing'
+  const [gate, setGate] = useState<'pending' | 'done'>('pending')
+  const [recording, setRecording] = useState(false)
 
   const advance = useCallback(() => {
     setIdx((i) => {
@@ -126,6 +130,25 @@ export function Experience({
   useEffect(() => {
     onStageChange?.(idx, stageId)
   }, [idx, stageId, onStageChange])
+
+  // If she stops sharing from the browser bar, reflect it in the UI.
+  useEffect(() => {
+    const onEnded = () => setRecording(false)
+    window.addEventListener('jaci-recording-ended', onEnded)
+    return () => window.removeEventListener('jaci-recording-ended', onEnded)
+  }, [])
+
+  // Haptic feedback: every button tap is physically felt (where supported).
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target && typeof target.closest === 'function' && target.closest('button')) {
+        hapticTap()
+      }
+    }
+    window.addEventListener('pointerdown', onDown, true)
+    return () => window.removeEventListener('pointerdown', onDown, true)
+  }, [])
 
   const app = config.appearance
   const accent = app.accentColor || config.entrance.heartColor
@@ -175,6 +198,14 @@ export function Experience({
 
   return (
     <ExperienceProvider config={config} meta={meta} preview={preview}>
+      {!preview && gate === 'pending' ? (
+        <RecordingGate
+          onDone={(rec) => {
+            setRecording(rec)
+            setGate('done')
+          }}
+        />
+      ) : (
       <div
         ref={scrollRef}
         className="no-scrollbar relative h-[100dvh] w-full overflow-y-auto overflow-x-hidden"
@@ -243,7 +274,16 @@ export function Experience({
             </button>
           </div>
         )}
+
+        {/* Recording indicator */}
+        {recording && (
+          <div className="pointer-events-none fixed right-4 top-4 z-[65] flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 pt-safe">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-rose" />
+            <span className="font-body text-xs tracking-wide text-white/85">Recording</span>
+          </div>
+        )}
       </div>
+      )}
     </ExperienceProvider>
   )
 }

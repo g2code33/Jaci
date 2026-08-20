@@ -50,3 +50,40 @@ export async function buildSignedUpload(
     publicId: opts.publicId,
   }
 }
+
+export interface CloudinaryResource {
+  public_id: string
+  resource_type: 'image' | 'video' | 'raw'
+  format?: string
+  width?: number
+  height?: number
+  folder?: string
+  secure_url?: string
+}
+
+/**
+ * List resources already in Cloudinary (Admin API). Uses basic auth with the
+ * API key + secret, server-side only — the secret never reaches the browser.
+ */
+export async function listCloudinaryResources(
+  settings: CloudinarySettings,
+  opts: { prefix?: string; resourceType?: 'image' | 'video' | 'raw'; maxResults?: number } = {},
+): Promise<CloudinaryResource[]> {
+  const resourceType = opts.resourceType || 'image'
+  const maxResults = opts.maxResults || 500
+  const params = new URLSearchParams({
+    type: 'upload',
+    max_results: String(maxResults),
+  })
+  if (opts.prefix) params.set('prefix', opts.prefix)
+
+  const url = `https://api.cloudinary.com/v1_1/${settings.cloudName}/resources/${resourceType}?${params.toString()}`
+  const auth = btoa(`${settings.apiKey}:${settings.apiSecret}`)
+  const res = await fetch(url, { headers: { Authorization: `Basic ${auth}` } })
+  if (!res.ok) {
+    const err = (await res.json().catch(() => null)) as { error?: { message?: string } } | null
+    throw new Error(err?.error?.message || `Cloudinary list failed (${res.status})`)
+  }
+  const data = (await res.json()) as { resources?: CloudinaryResource[] }
+  return data.resources || []
+}

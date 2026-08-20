@@ -234,6 +234,14 @@ body {
   box-shadow: none;
 }
 
+/* Press feedback on every button (felt visually on all devices). */
+.btn-solid:active:not(:disabled),
+.btn-outline:active {
+  transform: translateY(1px) scale(0.955);
+  filter: brightness(1.15);
+  transition: transform 70ms ease-out, filter 70ms ease-out;
+}
+
 /* Focus ring for inputs */
 .input-luxe {
   @apply w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 font-body text-base text-white placeholder-white/25 outline-none transition-colors duration-300;

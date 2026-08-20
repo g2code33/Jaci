@@ -17,6 +17,8 @@ export interface AdminContextValue {
   cloudinary: AdminCloudinary
   localUpload: boolean
   update: (path: string, value: unknown) => void
+  /** Persist a fully-built config to the draft store immediately. */
+  persist: (config: BirthdayConfig) => Promise<void>
   saveDraft: () => Promise<void>
   publish: () => Promise<void>
   revert: () => Promise<void>

@@ -4,6 +4,7 @@ import { GlowingHeart } from '@/components/GlowingHeart'
 import { OpeningHeart } from '@/components/OpeningHeart'
 import { clamp } from '@/lib/utils'
 import { playImpact, playWhoosh, playChime, ensureAudio } from '@/lib/sound'
+import { hapticPulse } from '@/lib/haptics'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface WishArrowProps {
@@ -132,6 +133,7 @@ export function WishArrow({
   const flashes = useRef<FX[]>([])
   const flowers = useRef<Flower[]>([])
   const sizeRef = useRef({ w: 0, h: 0 })
+  const lastShowerSpawn = useRef(0)
   const reduced = useRef(false)
 
   useEffect(() => {
@@ -244,6 +246,7 @@ export function WishArrow({
       spawnBurst(x, y, 70, heartColor)
       if (impactEffect === 'shockwave' || impactEffect === 'both') spawnShockwave(x, y)
       if (soundEffects) playImpact()
+      hapticPulse()
 
       pierceTimerRef.current = window.setTimeout(() => {
         phaseRef.current = 'opening'
@@ -391,7 +394,7 @@ export function WishArrow({
       cancelAnimationFrame(raf)
       ro.disconnect()
     }
-  }, [arrowColor, heartColor, arrowY])
+  }, [arrowColor, heartColor, arrowY, spawnShower, spawnFlowers])
 
   // ── Pointer interaction ───────────────────────────────────
   useEffect(() => {
@@ -438,6 +441,7 @@ export function WishArrow({
         setPhase('lunging')
         const target = -(geoRef.current.gap + heartSizeRef.current * 0.1)
         if (soundEffects) playWhoosh()
+        hapticPulse()
         animate(arrowY, target, {
           duration: flightRef.current / 1000,
           ease: 'easeIn',
@@ -524,9 +528,10 @@ export function WishArrow({
               type="button"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
+              whileTap={{ scale: 0.94 }}
               transition={{ delay: 0.55, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               onClick={() => onImpactRef.current()}
-              className="btn-solid mt-7"
+              className="btn-solid relative z-20 mt-7"
             >
               Continue ❤️
             </motion.button>
@@ -537,7 +542,7 @@ export function WishArrow({
       {/* Arrow — floats below the heart, dragged upward */}
       <motion.div
         ref={arrowRef}
-        style={{ y: arrowY }}
+        style={{ y: arrowY, pointerEvents: hideArrow ? 'none' : 'auto' }}
         animate={{ opacity: hideArrow ? 0 : 1, rotate: phase === 'pierce' ? -8 : 0 }}
         transition={{ opacity: { duration: 0.4 }, rotate: { duration: 0.2 } }}
         onPointerDown={onPointerDown}

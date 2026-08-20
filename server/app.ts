@@ -4,7 +4,7 @@
 import { Hono } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { createSessionToken, verifySessionToken } from './auth'
-import { buildSignedUpload, type CloudinarySettings } from './cloudinary'
+import { buildSignedUpload, listCloudinaryResources, type CloudinarySettings } from './cloudinary'
 import { safeEqualHex } from './crypto'
 import type { StorageAdapter } from './storage'
 import { DEFAULT_CONFIG } from '../src/lib/defaults'
@@ -309,6 +309,26 @@ export function createApp(deps: AppDeps): Hono {
       publicId: publicId || undefined,
     })
     return c.json({ enabled: true, ...signed })
+  })
+
+  app.get('/api/admin/cloudinary/resources', async (c) => {
+    if (!deps.cloudinary) {
+      return c.json({ enabled: false, resources: [], error: 'cloudinary_not_configured' })
+    }
+    try {
+      const prefix = deps.cloudinary.folder
+      const [images, videos] = await Promise.all([
+        listCloudinaryResources(deps.cloudinary, { prefix, resourceType: 'image' }),
+        listCloudinaryResources(deps.cloudinary, { prefix, resourceType: 'video' }),
+      ])
+      return c.json({ enabled: true, resources: [...images, ...videos] })
+    } catch (err) {
+      return c.json({
+        enabled: true,
+        resources: [],
+        error: err instanceof Error ? err.message : 'list_failed',
+      })
+    }
   })
 
   // ─── Local media upload (fallback when Cloudinary isn't set) ─

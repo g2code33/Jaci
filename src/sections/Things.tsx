@@ -1,52 +1,64 @@
 import { motion } from 'framer-motion'
 import { Stage } from '@/components/Stage'
-import { MediaView } from '@/components/MediaView'
 import { useExperience } from '@/context/ExperienceContext'
 
 interface Props {
   onDone: () => void
 }
 
+/**
+ * "Things I Don't Say Enough" — all cards plus the Continue button fit on a
+ * single screen, no scrolling. Cards shrink to fit however many there are.
+ */
 export function Things({ onDone }: Props) {
-  const { config, meta } = useExperience()
+  const { config } = useExperience()
   const things = config.things
   const cards = things.cards.filter((c) => !c.hidden)
+  const count = cards.length
+
+  // Shrink the text as more cards are added so everything always fits.
+  const titleSize = count <= 4 ? 'text-3xl sm:text-5xl' : count <= 8 ? 'text-2xl sm:text-4xl' : 'text-xl sm:text-3xl'
+  const msgSize =
+    count <= 3 ? 'text-2xl sm:text-3xl' : count <= 6 ? 'text-lg sm:text-xl' : 'text-sm sm:text-base'
 
   return (
-    <Stage align="top" className="pb-28">
-      <div className="mb-12 mt-6 text-center">
-        <h2 className="font-display text-4xl font-light text-glow sm:text-5xl">{things.title}</h2>
-        {things.subtitle && (
-          <p className="mt-3 font-display text-lg italic text-white/50">{things.subtitle}</p>
-        )}
-      </div>
+    <Stage full align="top" className="h-[100dvh] overflow-hidden">
+      <div className="flex h-full w-full flex-col px-5 py-6 pb-safe pt-safe">
+        {/* Title */}
+        <div className="mb-3 shrink-0 text-center">
+          <h2 className={`font-display font-light text-glow ${titleSize}`}>{things.title}</h2>
+          {things.subtitle && (
+            <p className="mt-1 font-display text-sm italic text-white/50 sm:text-lg">{things.subtitle}</p>
+          )}
+        </div>
 
-      <div className="grid w-full max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2 lg:max-w-4xl">
-        {cards.map((card, i) => (
-          <motion.div
-            key={card.id}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: things.animationDuration / 1000, delay: (i % 2) * 0.1 }}
-            className="glass rounded-3xl p-7 text-left"
-          >
-            {card.title && (
-              <h3 className="mb-2 font-display text-xl font-light text-rose-soft">{card.title}</h3>
-            )}
-            <p className="font-display text-2xl font-light leading-snug text-white/90">{card.message}</p>
-            {card.media && card.media.filter((m) => !m.hidden).length > 0 && (
-              <div className="mt-5 aspect-[4/3] overflow-hidden rounded-2xl border border-white/5">
-                <MediaView item={card.media.find((m) => !m.hidden)!} cloudName={meta.cloudName} width={800} />
-              </div>
-            )}
-          </motion.div>
-        ))}
-      </div>
+        {/* Cards — fill the remaining space equally, never overflow */}
+        <div className="grid min-h-0 flex-1 grid-cols-1 content-center gap-2.5 overflow-hidden sm:grid-cols-2">
+          {cards.map((card, i) => (
+            <motion.div
+              key={card.id}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className="glass flex min-h-0 flex-col justify-center overflow-hidden rounded-2xl p-4 text-center sm:p-5"
+            >
+              {card.title && (
+                <h3 className="mb-1 font-display text-sm italic text-rose-soft sm:text-base">{card.title}</h3>
+              )}
+              <p className={`font-display font-light leading-snug text-white/90 ${msgSize} line-clamp-4`}>
+                {card.message}
+              </p>
+            </motion.div>
+          ))}
+        </div>
 
-      <button type="button" className="btn-outline mt-16" onClick={onDone}>
-        Continue ❤️
-      </button>
+        {/* Continue — pinned to the bottom of the single page */}
+        <div className="flex shrink-0 justify-center pt-4">
+          <button type="button" className="btn-outline" onClick={onDone}>
+            Continue ❤️
+          </button>
+        </div>
+      </div>
     </Stage>
   )
 }

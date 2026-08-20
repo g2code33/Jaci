@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useExperience } from '@/context/ExperienceContext'
+import { getActiveMusic, setActiveMusic } from '@/lib/musicBus'
 import { cn } from '@/lib/utils'
 
 const FADE_MS = 900
@@ -398,12 +399,22 @@ export function MusicPlayer() {
       <audio
         ref={audioARef}
         preload="auto"
+        crossOrigin="anonymous"
+        onPlay={() => setActiveMusic(audioARef.current)}
+        onPause={() => {
+          if (getActiveMusic() === audioARef.current) setActiveMusic(null)
+        }}
         onEnded={handleEnded}
         className="hidden"
       />
       <audio
         ref={audioBRef}
         preload="auto"
+        crossOrigin="anonymous"
+        onPlay={() => setActiveMusic(audioBRef.current)}
+        onPause={() => {
+          if (getActiveMusic() === audioBRef.current) setActiveMusic(null)
+        }}
         onEnded={handleEnded}
         className="hidden"
       />

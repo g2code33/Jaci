@@ -64,6 +64,15 @@ export interface AdminConfigResponse {
   localUpload: boolean
 }
 
+export interface CloudinaryResource {
+  public_id: string
+  resource_type: 'image' | 'video' | 'raw'
+  format?: string
+  width?: number
+  height?: number
+  folder?: string
+}
+
 export const api = {
   // public
   getConfig: () => http<PublicConfigResponse>('/api/config'),
@@ -94,6 +103,8 @@ export const api = {
       signature?: string
       publicId?: string
     }>('/api/admin/cloudinary/signature', { folder }),
+  cloudinaryResources: () =>
+    http<{ enabled: boolean; resources: CloudinaryResource[]; error?: string }>('/api/admin/cloudinary/resources'),
   localUpload: (payload: { name: string; type: string; dataUrl: string }) =>
     post<{ ok: boolean; item?: MediaItem; error?: string }>('/api/admin/media/local', payload),
   localList: () => http<{ ok: boolean; items: Array<{ id: string; url: string }> }>('/api/admin/media/local'),

@@ -7,6 +7,7 @@ import { useExperience } from '@/context/ExperienceContext'
 import { useSessionId } from '@/hooks/useSessionId'
 import { api } from '@/lib/api'
 import { playChime, playClick } from '@/lib/sound'
+import { hapticPulse } from '@/lib/haptics'
 
 interface Props {
   onDone: () => void
@@ -50,6 +51,7 @@ export function SecretLock({ onDone }: Props) {
         setStage('unlocking')
         if (lock.unlockSound) playChime()
         else playClick()
+        hapticPulse()
       } else {
         if (res.lockedOut) setLockedOut(true)
         setAttemptsLeft(res.attemptsRemaining ?? null)
