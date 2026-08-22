@@ -150,9 +150,15 @@ export function Experience({
     return () => window.removeEventListener('pointerdown', onDown, true)
   }, [])
 
+  const isLightHex = (hex?: string) => {
+    if (!hex) return false
+    const h = hex.replace('#', '').trim().toLowerCase()
+    return h === 'fff' || h === 'ffffff' || h === 'white'
+  }
+
   const app = config.appearance
   const accent = app.accentColor || config.entrance.heartColor || '#ff4f9a'
-  const bgColor = app.backgroundColor && app.backgroundColor.trim() ? app.backgroundColor : '#08080c'
+  const bgColor = app.backgroundColor && !isLightHex(app.backgroundColor) ? app.backgroundColor : '#08080c'
   const textColor = app.textColor && app.textColor.trim() ? app.textColor : '#f5eff4'
   const rootStyle: React.CSSProperties = {
     backgroundColor: bgColor,

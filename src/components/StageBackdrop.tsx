@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { StageBackground } from '@/types/config'
 import { mediaUrl, videoBackgroundUrl, videoPoster } from '@/lib/cloudinary'
 import { WaterDrops } from '@/components/WaterDrops'
+import { useExperience } from '@/context/ExperienceContext'
 
 interface StageBackdropProps {
   bg?: StageBackground
@@ -21,24 +22,27 @@ interface StageBackdropProps {
  *   it falls back to the stage colour.
  */
 export function StageBackdrop({ bg, cloudName }: StageBackdropProps) {
+  const { config } = useExperience()
+  const effectiveCloudName = cloudName || config.media?.cloudName || ''
+
   const [videoReady, setVideoReady] = useState(false)
   const [videoFailed, setVideoFailed] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
 
   const imageUrl = useMemo(() => {
-    if (bg?.type === 'image' && bg.image) return mediaUrl(bg.image, cloudName, { width: 1600 })
+    if (bg?.type === 'image' && bg.image) return mediaUrl(bg.image, effectiveCloudName, { width: 1600 })
     return undefined
-  }, [bg, cloudName])
+  }, [bg, effectiveCloudName])
 
   const videoUrl = useMemo(() => {
-    if (bg?.type === 'video' && bg.video) return videoBackgroundUrl(bg.video, cloudName, bg)
+    if (bg?.type === 'video' && bg.video) return videoBackgroundUrl(bg.video, effectiveCloudName, bg)
     return undefined
-  }, [bg, cloudName])
+  }, [bg, effectiveCloudName])
 
   const poster = useMemo(() => {
-    if (bg?.type === 'video' && bg.video) return videoPoster(bg.video, cloudName)
+    if (bg?.type === 'video' && bg.video) return videoPoster(bg.video, effectiveCloudName)
     return undefined
-  }, [bg, cloudName])
+  }, [bg, effectiveCloudName])
 
   // Reset playback/load state whenever the source changes.
   useEffect(() => {
@@ -50,7 +54,12 @@ export function StageBackdrop({ bg, cloudName }: StageBackdropProps) {
     setImageFailed(false)
   }, [imageUrl])
 
-  const fallbackColor = bg?.color && bg.color.trim() ? bg.color : '#08080c'
+  const isLightHex = (hex?: string) => {
+    if (!hex) return false
+    const h = hex.replace('#', '').trim().toLowerCase()
+    return h === 'fff' || h === 'ffffff' || h === 'white'
+  }
+  const fallbackColor = bg?.color && !isLightHex(bg.color) ? bg.color : '#08080c'
 
   const imageFilter = [
     `blur(${bg?.blur ?? 0}px)`,
