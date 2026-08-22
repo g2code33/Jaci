@@ -22,8 +22,8 @@ export function optimizeCloudinaryUrl(url: string, opts: CloudinaryUrlOptions = 
   if (!url || !url.includes('res.cloudinary.com')) return url
 
   let result = url
-  // Replace .heic/.heif with .jpg or remove it
-  result = result.replace(/\.(heic|heif|HEIC|HEIF)($|\?)/i, '$2')
+  // Replace .heic/.heif with .jpg to force universal decoding on Android & PC
+  result = result.replace(/\.(heic|heif|HEIC|HEIF)($|\?)/i, '.jpg$2')
 
   if (result.includes('/image/upload/')) {
     const parts = result.split('/image/upload/')
@@ -87,7 +87,8 @@ export function mediaUrl(
 
     if (item.kind === 'image') {
       const cleanPid = cleanImagePublicId(item.publicId)
-      return `${base}/image/upload/${t}/${cleanPid}`
+      const ext = item.format === 'svg' ? '.svg' : '.jpg'
+      return `${base}/image/upload/${t}/${cleanPid}${ext}`
     }
     // Videos and audio use the "video" resource type in Cloudinary URLs.
     const ext = item.format && !['heic', 'heif'].includes(item.format.toLowerCase()) ? `.${item.format}` : ''

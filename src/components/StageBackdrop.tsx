@@ -23,7 +23,6 @@ interface StageBackdropProps {
 export function StageBackdrop({ bg, cloudName }: StageBackdropProps) {
   const [videoReady, setVideoReady] = useState(false)
   const [videoFailed, setVideoFailed] = useState(false)
-  const [imageReady, setImageReady] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
 
   const imageUrl = useMemo(() => {
@@ -48,7 +47,6 @@ export function StageBackdrop({ bg, cloudName }: StageBackdropProps) {
   }, [videoUrl])
 
   useEffect(() => {
-    setImageReady(false)
     setImageFailed(false)
   }, [imageUrl])
 
