@@ -144,11 +144,12 @@ function Slide({
 }) {
   const m = slide.media
   const isVideo = m?.kind === 'video'
-  const url = m ? mediaUrl(m, cloudName, { width: 1600 }) : undefined
+  const [mediaFailed, setMediaFailed] = useState(false)
+  const url = m && !mediaFailed ? mediaUrl(m, cloudName, { width: 1600 }) : undefined
 
   return (
     <>
-      {m ? (
+      {m && url ? (
         <div className="absolute inset-0 bg-night-900">
           {isVideo ? (
             <video
@@ -156,6 +157,7 @@ function Slide({
               autoPlay
               muted
               playsInline
+              onError={() => setMediaFailed(true)}
               className="h-full w-full object-cover"
               onEnded={onDone}
             />
@@ -164,6 +166,7 @@ function Slide({
               src={url}
               alt=""
               draggable={false}
+              onError={() => setMediaFailed(true)}
               initial={{ scale: 1.12 }}
               animate={{ scale: 1 }}
               transition={{ duration: Math.max(4, slideMs / 1000 + 1), ease: 'linear' }}
