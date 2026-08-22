@@ -85,13 +85,11 @@ export function createLocalFileStore(dir: string): LocalFileStore {
 
 function cloudinaryFromEnv(): CloudinarySettings | undefined {
   const cloudName = env('CLOUDINARY_CLOUD_NAME')
-  const apiKey = env('CLOUDINARY_API_KEY')
-  const apiSecret = env('CLOUDINARY_API_SECRET')
-  if (!cloudName || !apiKey || !apiSecret) return undefined
+  if (!cloudName) return undefined
   return {
     cloudName,
-    apiKey,
-    apiSecret,
+    apiKey: env('CLOUDINARY_API_KEY', ''),
+    apiSecret: env('CLOUDINARY_API_SECRET', ''),
     folder: env('CLOUDINARY_FOLDER', 'jacinta-birthday'),
   }
 }

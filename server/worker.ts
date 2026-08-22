@@ -28,15 +28,14 @@ export interface Env {
 let cachedApp: ReturnType<typeof createApp> | null = null
 
 function buildApp(env: Env) {
-  const cloudinary =
-    env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET
-      ? {
-          cloudName: env.CLOUDINARY_CLOUD_NAME,
-          apiKey: env.CLOUDINARY_API_KEY,
-          apiSecret: env.CLOUDINARY_API_SECRET,
-          folder: env.CLOUDINARY_FOLDER || 'jacinta-birthday',
-        }
-      : undefined
+  const cloudinary = env.CLOUDINARY_CLOUD_NAME
+    ? {
+        cloudName: env.CLOUDINARY_CLOUD_NAME,
+        apiKey: env.CLOUDINARY_API_KEY || '',
+        apiSecret: env.CLOUDINARY_API_SECRET || '',
+        folder: env.CLOUDINARY_FOLDER || 'jacinta-birthday',
+      }
+    : undefined
 
   return createApp({
     storage: createD1Storage(env.DB),

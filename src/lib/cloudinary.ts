@@ -59,10 +59,22 @@ export function mediaUrl(
 ): string | undefined {
   if (!item) return undefined
 
+  // Determine effective cloudName: from argument, or extracted from URL if available
+  let effectiveCloudName = cloudName || ''
+  if (!effectiveCloudName && item.url && item.url.includes('res.cloudinary.com/')) {
+    const match = item.url.match(/res\.cloudinary\.com\/([^/]+)/)
+    if (match) effectiveCloudName = match[1]
+  }
+
+  // If item.publicId is actually a full URL
+  if (item.publicId && (item.publicId.startsWith('http://') || item.publicId.startsWith('https://'))) {
+    return optimizeCloudinaryUrl(item.publicId, opts)
+  }
+
   // When Cloudinary is available, always use its dynamic pipeline so format conversion
   // (HEIC -> WebP/JPEG for Android & PC) works reliably.
-  if (item.publicId && cloudName) {
-    const base = `https://res.cloudinary.com/${cloudName}`
+  if (item.publicId && effectiveCloudName) {
+    const base = `https://res.cloudinary.com/${effectiveCloudName}`
     const transforms = ['q_auto', 'f_auto']
     if (opts.width && opts.height) {
       transforms.push(`w_${opts.width}`, `h_${opts.height}`, 'c_fill')

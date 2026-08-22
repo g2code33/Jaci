@@ -101,12 +101,11 @@ export function StageBackdrop({ bg, cloudName }: StageBackdropProps) {
             src={imageUrl}
             alt=""
             draggable={false}
-            onLoad={() => setImageReady(true)}
             onError={() => setImageFailed(true)}
-            className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out"
+            className="absolute inset-0 h-full w-full object-cover"
             style={{
               filter: imageFilter,
-              opacity: imageReady ? (bg.opacity ?? 1) : 0,
+              opacity: bg.opacity ?? 1,
               transform: `scale(${bg.scale ?? 1})`,
             }}
           />
