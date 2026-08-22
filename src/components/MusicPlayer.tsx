@@ -84,20 +84,20 @@ export function MusicPlayer() {
     }
   }
 
-  // Fade an element in from 0 → 1 (used on start and resume).
+  // Fade an element in from 0.15 → 1 (used on start and resume).
   const fadeIn = useCallback((el: HTMLAudioElement | null) => {
     if (!el) return
     cancelRamp()
     const isA = el === audioARef.current
-    if (isA) fadeA.current = 0
-    else fadeB.current = 0
-    applyVolume(el, 0)
+    if (isA) fadeA.current = 0.2
+    else fadeB.current = 0.2
+    applyVolume(el, 0.2)
     el.play()
       .then(() => {
         const start = performance.now()
         const step = (now: number) => {
           const t = Math.min(1, (now - start) / FADE_IN_MS)
-          const eased = easeInOutQuad(t)
+          const eased = Math.max(0.2, easeInOutQuad(t))
           if (isA) fadeA.current = eased
           else fadeB.current = eased
           applyVolume(el, eased)
@@ -121,6 +121,7 @@ export function MusicPlayer() {
     el.loop = list.length === 1
     el.src = track.url
     el.currentTime = 0
+    el.load()
     indexRef.current = Math.min(trackIndex, list.length - 1)
     setIndex(indexRef.current)
     playingRef.current = true
@@ -231,19 +232,18 @@ export function MusicPlayer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [volume, muted])
 
-  // Tapping any major button starts the music; further taps crossfade to the
-  // next track. Music controls are excluded so they don't double-fire.
+  // Any tap anywhere on the screen (ring, heart, arrow, button) starts the music;
+  // Further major button taps crossfade to the next track if more than 1 track exists.
   useEffect(() => {
     if (!music.enabled || tracks.length === 0) return
     const onTap = (e: Event) => {
       const target = e.target as HTMLElement | null
       if (target && typeof target.closest === 'function') {
         if (target.closest('[data-music-controls]')) return
-        if (!target.closest('button')) return
       }
       if (!playingRef.current) {
         startMusic(indexRef.current)
-      } else if (tracks.length > 1) {
+      } else if (tracks.length > 1 && target && typeof target.closest === 'function' && target.closest('button')) {
         crossfade((indexRef.current + 1) % tracks.length)
       }
     }
@@ -251,9 +251,13 @@ export function MusicPlayer() {
       if (!playingRef.current) startMusic(indexRef.current)
     }
     window.addEventListener('pointerdown', onTap, { capture: true })
+    window.addEventListener('touchstart', onTap, { capture: true, passive: true })
+    window.addEventListener('click', onTap, { capture: true })
     window.addEventListener('keydown', onKey, { capture: true })
     return () => {
       window.removeEventListener('pointerdown', onTap, true)
+      window.removeEventListener('touchstart', onTap, true)
+      window.removeEventListener('click', onTap, true)
       window.removeEventListener('keydown', onKey, true)
     }
   }, [music.enabled, tracks.length, startMusic, crossfade])

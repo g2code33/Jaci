@@ -26,11 +26,30 @@ export function ensureAudio(): AudioContext | null {
       master.gain.value = 0.5
       master.connect(ctx.destination)
     }
-    if (ctx.state === 'suspended') void ctx.resume()
+    if (ctx.state === 'suspended') {
+      void ctx.resume().catch(() => {})
+    }
     return ctx
   } catch {
     return null
   }
+}
+
+// Automatically unlock AudioContext on first user gesture on mobile browsers (Firefox Android, Chrome, Safari)
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    ensureAudio()
+    if (ctx && ctx.state === 'running') {
+      window.removeEventListener('pointerdown', unlockAudio, true)
+      window.removeEventListener('touchstart', unlockAudio, true)
+      window.removeEventListener('touchend', unlockAudio, true)
+      window.removeEventListener('click', unlockAudio, true)
+    }
+  }
+  window.addEventListener('pointerdown', unlockAudio, { capture: true, passive: true })
+  window.addEventListener('touchstart', unlockAudio, { capture: true, passive: true })
+  window.addEventListener('touchend', unlockAudio, { capture: true, passive: true })
+  window.addEventListener('click', unlockAudio, { capture: true, passive: true })
 }
 
 function now(ac: AudioContext): number {
