@@ -151,13 +151,15 @@ export function Experience({
   }, [])
 
   const app = config.appearance
-  const accent = app.accentColor || config.entrance.heartColor
+  const accent = app.accentColor || config.entrance.heartColor || '#ff4f9a'
+  const bgColor = app.backgroundColor && app.backgroundColor.trim() ? app.backgroundColor : '#08080c'
+  const textColor = app.textColor && app.textColor.trim() ? app.textColor : '#f5eff4'
   const rootStyle: React.CSSProperties = {
-    background: app.backgroundColor || '#08080c',
-    color: app.textColor || '#f5eff4',
+    backgroundColor: bgColor,
+    color: textColor,
   }
-  ;(rootStyle as Record<string, string>)['--font-heading'] = app.fontHeading
-  ;(rootStyle as Record<string, string>)['--font-body'] = app.fontBody
+  ;(rootStyle as Record<string, string>)['--font-heading'] = app.fontHeading || '"Cormorant Garamond", Georgia, serif'
+  ;(rootStyle as Record<string, string>)['--font-body'] = app.fontBody || 'Inter, system-ui, sans-serif'
 
   const stageBg = config.backgrounds?.[stageId]
 
@@ -208,7 +210,7 @@ export function Experience({
       ) : (
       <div
         ref={scrollRef}
-        className="no-scrollbar relative h-dvh w-full overflow-y-auto overflow-x-hidden"
+        className="no-scrollbar relative h-dvh w-full overflow-y-auto overflow-x-hidden bg-[#08080c]"
         style={rootStyle}
       >
         {/* Per-stage background (colour / gradient / photo + effects) */}

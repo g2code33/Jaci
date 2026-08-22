@@ -4,7 +4,7 @@ import { Section } from '@/admin/editors'
 import { MediaView } from '@/components/MediaView'
 import { Lightbox } from '@/components/Lightbox'
 import { api, type CloudinaryResource } from '@/lib/api'
-import { attachmentUrl, mediaUrl } from '@/lib/cloudinary'
+import { attachmentUrl, cleanImagePublicId, mediaUrl } from '@/lib/cloudinary'
 import { moveIn, removeAt } from '@/lib/path'
 import { uid } from '@/lib/utils'
 import type { MediaItem, MediaType } from '@/types/config'
@@ -19,11 +19,12 @@ function resourceToItem(r: CloudinaryResource): MediaItem {
   if (r.resource_type === 'video') {
     kind = AUDIO_FORMATS.includes(format) ? 'audio' : 'video'
   }
+  const cleanPid = kind === 'image' ? cleanImagePublicId(r.public_id) : r.public_id
   const name = r.public_id.split('/').pop() || r.public_id
   return {
     id: uid(),
     kind,
-    publicId: r.public_id,
+    publicId: cleanPid,
     format: format || undefined,
     width: r.width,
     height: r.height,
@@ -84,10 +85,11 @@ export function MediaLibrary() {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data?.error?.message || 'Upload failed')
+    const kind = kindFromType(file.type, data.resource_type)
     return {
       id: uid(),
-      kind: kindFromType(file.type, data.resource_type),
-      publicId: data.public_id,
+      kind,
+      publicId: kind === 'image' ? cleanImagePublicId(data.public_id) : data.public_id,
       format: data.format,
       width: data.width,
       height: data.height,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { MediaItem } from '@/types/config'
 import { mediaUrl, videoPoster } from '@/lib/cloudinary'
@@ -13,8 +13,13 @@ interface LightboxProps {
 
 export function Lightbox({ items, index, cloudName, onClose, onNavigate }: LightboxProps) {
   const item = items[index]
+  const [failed, setFailed] = useState(false)
   const prev = useCallback(() => onNavigate((index - 1 + items.length) % items.length), [index, items.length, onNavigate])
   const next = useCallback(() => onNavigate((index + 1) % items.length), [index, items.length, onNavigate])
+
+  useEffect(() => {
+    setFailed(false)
+  }, [item?.id])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -97,16 +102,26 @@ export function Lightbox({ items, index, cloudName, onClose, onNavigate }: Light
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {item.kind === 'video' ? (
+          {failed || !url ? (
+            <div className="flex h-64 w-64 items-center justify-center rounded-2xl bg-white/5 text-center text-rose/60">
+              <span className="text-4xl">❤</span>
+            </div>
+          ) : item.kind === 'video' ? (
             <video
               src={url}
               poster={poster}
               controls
               playsInline
+              onError={() => setFailed(true)}
               className="max-h-[78vh] w-auto max-w-full rounded-xl object-contain"
             />
           ) : (
-            <img src={url} alt={item.alt || item.caption || 'Memory'} className="max-h-[78vh] w-auto max-w-full rounded-xl object-contain" />
+            <img
+              src={url}
+              alt={item.alt || item.caption || 'Memory'}
+              onError={() => setFailed(true)}
+              className="max-h-[78vh] w-auto max-w-full rounded-xl object-contain"
+            />
           )}
           {(item.caption || item.alt) && (
             <p className="mt-5 max-w-xl text-center font-display text-lg italic text-white/80">{item.caption || item.alt}</p>
