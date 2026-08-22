@@ -87,8 +87,7 @@ export function mediaUrl(
 
     if (item.kind === 'image') {
       const cleanPid = cleanImagePublicId(item.publicId)
-      const ext = item.format === 'svg' ? '.svg' : '.jpg'
-      return `${base}/image/upload/${t}/${cleanPid}${ext}`
+      return `${base}/image/upload/${t}/${cleanPid}`
     }
     // Videos and audio use the "video" resource type in Cloudinary URLs.
     const ext = item.format && !['heic', 'heif'].includes(item.format.toLowerCase()) ? `.${item.format}` : ''
