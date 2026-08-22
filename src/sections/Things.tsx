@@ -22,7 +22,7 @@ export function Things({ onDone }: Props) {
     count <= 3 ? 'text-2xl sm:text-3xl' : count <= 6 ? 'text-lg sm:text-xl' : 'text-sm sm:text-base'
 
   return (
-    <Stage full align="top" className="h-[100dvh] overflow-hidden">
+    <Stage full align="top" className="h-dvh overflow-hidden">
       <div className="flex h-full w-full flex-col px-5 py-6 pb-safe pt-safe">
         {/* Title */}
         <div className="mb-3 shrink-0 text-center">

@@ -474,6 +474,21 @@ export function WishArrow({
     }
   }, [])
 
+    // Continuous flowers while the heart is open — keeps popping out of the
+  // heart and raining down until Continue is pressed (which advances the
+  // stage away). Uses a separate interval so it works regardless of the
+  // drawFx loop structure.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (phaseRef.current === 'opening') {
+        const { heartCX, heartCY, heartSize: hs } = geoRef.current
+        spawnShower(heartCX, heartCY + hs * 0.3, 10)
+        spawnFlowers(heartCX, heartCY + hs * 0.3, 4)
+      }
+    }, 140)
+    return () => window.clearInterval(id)
+  }, [spawnShower, spawnFlowers])
+
   const onPointerDown = (e: React.PointerEvent) => {
     if (phaseRef.current !== 'idle' && phaseRef.current !== 'dragging') return
     e.preventDefault()

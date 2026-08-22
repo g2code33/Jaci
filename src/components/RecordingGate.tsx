@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { GlowingHeart } from '@/components/GlowingHeart'
 import { useExperience } from '@/context/ExperienceContext'
-import { canScreenRecord, isIOS, startScreenRecording } from '@/lib/recorder'
+import { isIOS, startScreenRecording } from '@/lib/recorder'
 
 interface Props {
   onDone: (recording: boolean) => void
@@ -15,11 +15,6 @@ export function RecordingGate({ onDone }: Props) {
   const [note, setNote] = useState<string | null>(null)
 
   const ios = isIOS()
-  const canRecord = canScreenRecord()
-
-  const choose = (recording: boolean) => {
-    if (!busy) onDone(recording)
-  }
 
   const record = async () => {
     setBusy(true)
@@ -33,7 +28,8 @@ export function RecordingGate({ onDone }: Props) {
         setNote('No problem — you can still enjoy it without recording. ❤️')
         window.setTimeout(() => onDone(false), 1500)
       } else {
-        onDone(false)
+        setNote('Recording isn\u2019t available here — continuing without it. ❤️')
+        window.setTimeout(() => onDone(false), 1500)
       }
     } catch {
       onDone(false)
@@ -44,7 +40,7 @@ export function RecordingGate({ onDone }: Props) {
 
   return (
     <motion.div
-      className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center bg-night-900 px-6 text-center"
+      className="relative flex min-h-dvh w-full flex-col items-center justify-center bg-night-900 px-6 text-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
@@ -66,18 +62,7 @@ export function RecordingGate({ onDone }: Props) {
       </p>
 
       <div className="mt-10 flex w-full max-w-sm flex-col items-stretch gap-3">
-        {canRecord && !ios && (
-          <>
-            <button type="button" className="btn-solid" onClick={record} disabled={busy}>
-              {busy ? 'Waiting for permission…' : '🎬 Record my keepsake'}
-            </button>
-            <button type="button" className="btn-outline" onClick={() => choose(false)} disabled={busy}>
-              No, just the experience
-            </button>
-          </>
-        )}
-
-        {ios && (
+        {ios ? (
           <>
             <div className="glass rounded-2xl p-5 text-left">
               <p className="font-body text-sm leading-relaxed text-white/85">
@@ -87,16 +72,19 @@ export function RecordingGate({ onDone }: Props) {
                 be made for you automatically. ❤️
               </p>
             </div>
-            <button type="button" className="btn-solid" onClick={() => choose(false)}>
+            <button type="button" className="btn-solid" onClick={() => onDone(false)}>
               Continue to the experience ❤️
             </button>
           </>
-        )}
-
-        {!canRecord && !ios && (
-          <button type="button" className="btn-solid" onClick={() => choose(false)}>
-            Continue ❤️
-          </button>
+        ) : (
+          <>
+            <button type="button" className="btn-solid" onClick={record} disabled={busy}>
+              {busy ? 'Waiting for permission…' : '🎬 Record my keepsake'}
+            </button>
+            <button type="button" className="btn-outline" onClick={() => onDone(false)} disabled={busy}>
+              No, just the experience
+            </button>
+          </>
         )}
       </div>
 

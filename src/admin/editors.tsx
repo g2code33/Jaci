@@ -219,8 +219,10 @@ export function StoryEditor() {
       <Grid>
         <TextField path="story.title" label="Title" />
         <TextField path="story.subtitle" label="Subtitle" />
-        <NumberField path="story.animationDuration" label="Entry animation (ms)" min={100} max={4000} step={100} />
+        <NumberField path="story.animationDuration" label="Transition (ms)" min={100} max={4000} step={100} />
+        <NumberField path="story.slideDuration" label="Photo duration (ms)" hint="How long each photo stays before auto-advancing." min={1500} max={20000} step={500} />
       </Grid>
+      <TextField path="story.closingLine" label="Closing line (optional)" hint="Shown under the heart at the end of the story. Leave empty for none." />
       <div className="space-y-4">
         {entries.map((entry, i) => (
           <Card

@@ -20,7 +20,7 @@ export function ExperienceProvider({
   meta,
   preview = false,
   children,
-}: ExperienceContextValue & { children: React.ReactNode }) {
+}: Omit<ExperienceContextValue, 'preview'> & { preview?: boolean; children: React.ReactNode }) {
   return (
     <ExperienceContext.Provider value={{ config, meta, preview }}>
       {children}

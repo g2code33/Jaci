@@ -14,7 +14,7 @@ export function Stage({ children, className, full, align = 'center', style }: St
   return (
     <motion.section
       className={cn(
-        'relative z-10 flex min-h-[100dvh] w-full flex-col items-center overflow-hidden',
+        'relative z-10 flex min-h-dvh w-full flex-col items-center overflow-hidden',
         align === 'top' ? 'justify-start pt-24' : 'justify-center',
         !full && 'px-6 text-center',
         className,

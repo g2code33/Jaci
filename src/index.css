@@ -6,6 +6,21 @@
   color-scheme: dark;
 }
 
+/* Viewport-height units with a vh fallback — older Android WebViews don't
+   support dvh/svh, so without this the app collapses and shows white. */
+.h-dvh {
+  height: 100vh;
+  height: 100dvh;
+}
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.h-svh {
+  height: 100vh;
+  height: 100svh;
+}
+
 html,
 body,
 #root {

@@ -8,7 +8,7 @@ import type { BirthdayConfig, StoreMeta } from '@/types/config'
 
 function Loading() {
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-night-900">
+    <div className="flex min-h-dvh items-center justify-center bg-night-900">
       <p className="font-display text-lg italic text-white/40">Loading…</p>
     </div>
   )

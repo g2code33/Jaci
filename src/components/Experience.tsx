@@ -208,7 +208,7 @@ export function Experience({
       ) : (
       <div
         ref={scrollRef}
-        className="no-scrollbar relative h-[100dvh] w-full overflow-y-auto overflow-x-hidden"
+        className="no-scrollbar relative h-dvh w-full overflow-y-auto overflow-x-hidden"
         style={rootStyle}
       >
         {/* Per-stage background (colour / gradient / photo + effects) */}

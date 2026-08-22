@@ -39,7 +39,7 @@ export function MediaLibraryModal({
   }, [draft.media.library, filter, query, type])
 
   const tabs: Array<{ id: 'all' | MediaType; label: string; icon: string }> = [
-    { id: 'all', label: 'All', icon: '✦' },
+    { id: 'all', label: 'All', icon: '' },
     { id: 'image', label: 'Photos', icon: '🖼' },
     { id: 'video', label: 'Videos', icon: '🎬' },
     { id: 'audio', label: 'Music', icon: '🎵' },

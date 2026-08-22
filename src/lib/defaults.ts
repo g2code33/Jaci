@@ -128,6 +128,8 @@ export const DEFAULT_CONFIG: BirthdayConfig = {
     title: 'Our Story',
     subtitle: 'Some moments deserve to be remembered.',
     animationDuration: 700,
+    closingLine: '',
+    slideDuration: 5000,
     entries: [
       {
         id: 'placeholder-1',

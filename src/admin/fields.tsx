@@ -35,7 +35,10 @@ export function ResetButton({ path, onReset }: { path: string; onReset?: () => v
       }}
       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-sm text-white/40 transition hover:bg-white/15 hover:text-white"
     >
-      ↺
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M3 12a9 9 0 1 0 3-6.7" />
+        <path d="M3 4v5h5" />
+      </svg>
     </button>
   )
 }

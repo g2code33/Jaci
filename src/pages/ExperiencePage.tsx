@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Experience } from '@/components/Experience'
 import { GlowingHeart } from '@/components/GlowingHeart'
+import { MediaPreloader } from '@/components/MediaPreloader'
+import { ExperienceProvider } from '@/context/ExperienceContext'
 import { api } from '@/lib/api'
 import { DEFAULT_CONFIG } from '@/lib/defaults'
 import type { BirthdayConfig } from '@/types/config'
@@ -8,7 +10,7 @@ import type { ExperienceMeta } from '@/context/ExperienceContext'
 
 function LoadingScreen() {
   return (
-    <div className="flex h-[100dvh] w-full items-center justify-center bg-night-900">
+    <div className="flex h-dvh w-full items-center justify-center bg-night-900">
       <GlowingHeart color="#ff4f9a" size={40} glow={0.7} />
     </div>
   )
@@ -16,6 +18,7 @@ function LoadingScreen() {
 
 export default function ExperiencePage() {
   const [state, setState] = useState<{ config: BirthdayConfig; meta: ExperienceMeta } | null>(null)
+  const [preloaded, setPreloaded] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -39,5 +42,13 @@ export default function ExperiencePage() {
 
   if (!state) return <LoadingScreen />
 
-  return <Experience config={state.config} meta={state.meta} />
+  return (
+    <ExperienceProvider config={state.config} meta={state.meta}>
+      {!preloaded ? (
+        <MediaPreloader onDone={() => setPreloaded(true)} />
+      ) : (
+        <Experience config={state.config} meta={state.meta} />
+      )}
+    </ExperienceProvider>
+  )
 }

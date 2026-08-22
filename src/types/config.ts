@@ -151,6 +151,10 @@ export interface StoryConfig {
   entries: StoryEntry[]
   /** ms the timeline entries animate in. */
   animationDuration: number
+  /** Optional line shown in the gentle close at the end of the story. */
+  closingLine: string
+  /** ms each photo stays on screen before auto-advancing. */
+  slideDuration: number
 }
 
 export interface MemoriesConfig {

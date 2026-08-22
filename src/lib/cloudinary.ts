@@ -20,9 +20,13 @@ export function mediaUrl(
 
   const base = `https://res.cloudinary.com/${cloudName}`
   const transforms = ['q_auto', 'f_auto']
-  if (opts.width) transforms.push(`w_${opts.width}`)
-  if (opts.height) transforms.push(`h_${opts.height}`)
-  if (opts.width || opts.height) transforms.push('c_fill')
+  if (opts.width && opts.height) {
+    transforms.push(`w_${opts.width}`, `h_${opts.height}`, 'c_fill')
+  } else if (opts.width) {
+    transforms.push('c_scale', `w_${opts.width}`)
+  } else if (opts.height) {
+    transforms.push('c_scale', `h_${opts.height}`)
+  }
   const t = transforms.join(',')
 
   if (item.kind === 'image') {

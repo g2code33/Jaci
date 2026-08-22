@@ -97,7 +97,7 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-night-900 text-white">
+    <div className="min-h-dvh bg-night-900 text-white">
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-night-900/95 backdrop-blur-md">
         <div className="flex flex-col gap-2.5 px-3 pt-3 lg:flex-row lg:items-center lg:justify-between lg:px-4">
@@ -109,7 +109,9 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
               aria-label="Open menu"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-white/70 transition hover:bg-white/10 lg:hidden"
             >
-              ☰
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
             </button>
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <span aria-hidden className="text-rose">❤</span>
@@ -130,7 +132,11 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
               aria-label="Log out"
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/5 text-white/60 transition hover:bg-white/10 lg:hidden"
             >
-              ⏻
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="M16 17l5-5-5-5" />
+                <path d="M21 12H9" />
+              </svg>
             </button>
           </div>
 
